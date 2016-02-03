@@ -16,7 +16,7 @@ sudo apt-get upgrade -y
 sudo apt-get install openjdk-8-jdk -y
 sudo apt-get install maven -y
 
-echo export JAVA_HOME=\"$(readlink -f /usr/bin/java | sed "s:bin/java::" | sed "s:/jre/::")\" >> ~/.bashrc
+echo export JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:bin/java::") >> ~/.bashrc
 source ~/.bashrc
 sudo ln -s $(readlink -f /usr/bin/java | sed "s:bin/java::" | sed "s:/jre/::") /usr/lib/jvm/default-java
 

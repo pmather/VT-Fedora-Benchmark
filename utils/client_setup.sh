@@ -26,6 +26,7 @@ sudo apt-get install libhdf5-dev -y
 sudo pip install xmltodict
 sudo pip install h5py
 sudo apt-get install openjdk-8-jdk -y
+rm get-pip.py
 
 cd
 wget http://projects.iq.harvard.edu/files/fits/files/fits-0.9.0.zip?m=1449588471 -O fits-0.9.0.zip
