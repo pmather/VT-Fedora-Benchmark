@@ -47,6 +47,7 @@ def createFedoraBinary(filepath, fedoraurl):
 
 def main():
 	fedoraurl = sys.argv[1]
+	# use current dir if not specified
 	h5dir = sys.argv[2] if len(sys.argv) > 2 else "."
 
 	outputfile = open(os.path.join(h5dir, "experiment1_{}_results.txt".format(datetime.date.today())), "a")
