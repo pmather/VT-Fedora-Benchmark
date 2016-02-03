@@ -1,4 +1,5 @@
 import datetime
+import boto3
 import h5py
 import pycurl
 import sys,os
@@ -10,6 +11,14 @@ from socket import error as SocketError
 from subprocess import call
 from StringIO import StringIO    
 from time import ctime
+
+def downloadFromS3(filename):
+	s3 = boto3.client('s3')
+	s3.download_file('sebdata', filename, filename)
+
+def downloadFromGDrive(gdrivedir, filename):
+	url = "https://googledrive.com/host/{}/{}".format(gdrivedir, filename)
+	call("wget " + url + " -O " + filename, shell=True)
 
 def createFedoraObject(rdfdata, fedoraurl):	
 	storage = StringIO()
@@ -47,26 +56,26 @@ def createFedoraBinary(filepath, fedoraurl):
 
 def main():
 	fedoraurl = sys.argv[1]
-	# use current dir if not specified
-	h5dir = sys.argv[2] if len(sys.argv) > 2 else "."
+	datasetfilename = sys.argv[2]
+	gdriveDir = sys.argv[3]
 
-	outputfile = open(os.path.join(h5dir, "experiment1_{}_results.txt".format(datetime.date.today())), "a")
-	urlfile = open(os.path.join(h5dir, "fedoraurls.txt"), "a")
+	outputfile = open("experiment1_{}_results.txt".format(datetime.date.today()), "a")
+	urlfile = open("fedoraurls.txt", "a")
 
 	outputfile.write(str(ctime()) + "\n")
 	tic = time.time()
 
-	lines = []
-	for file in os.listdir(h5dir):
-		if file.endswith(".h5"):
-			lines.append(file)
+	with open(datasetfilename) as f:
+		lines = f.readlines()
 	
 	for line in lines:
 		fileName = line.strip()
-		filePath = os.path.join(h5dir, fileName)
+
+		# downloadFromS3(fileName)
+		downloadFromGDrive(gdriveDir, fileName)
 
 		# read hdf5 file
-		f = h5py.File(filePath, 'r')
+		f = h5py.File(fileName, 'r')
 
 		if f.keys()[0] is not None:
 			datasets = f[f.keys()[0]]
@@ -80,10 +89,10 @@ def main():
 				c += 1
 
 			# run fits program 
-			call("~/fits-0.9.0/fits.sh -i " + filePath + " > " + filePath + "_fits.xml", shell=True)
+			call("~/fits-0.9.0/fits.sh -i " + fileName + " > " + fileName + "_fits.xml", shell=True)
 
 			# read fits xml
-			fitsxml = open(filePath + "_fits.xml", 'r').read()
+			fitsxml = open(fileName + "_fits.xml", 'r').read()
 			result = xmltodict.parse( fitsxml )
 			description = result['fits']['identification']['identity'][0]['@format']
 			format = result['fits']['identification']['identity'][0]['@mimetype']
@@ -107,12 +116,12 @@ def main():
 			# Create Fedora binary
 			if len(objecturl) > 0:
 				fileurl = objecturl + "/h5"
-				createFedoraBinary(filePath, fileurl)
+				createFedoraBinary(fileName, fileurl)
 				urlfile.write(objecturl+"\n")
 				print fileurl
 
-		os.remove(filePath)
-		os.remove(filePath + "_fits.xml")
+		os.remove(fileName)
+		os.remove(fileName + "_fits.xml")
 
 	toc = time.time()
 	print str(toc-tic)
