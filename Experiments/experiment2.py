@@ -44,8 +44,9 @@ def sha1OfFile(filepath):
 
 def main():
 	fedorurls = sys.argv[1]
+	directory = os.path.dirname(fedorurls)
 
-	outputfile = open("experiment2_{}.txt".format(datetime.date.today()), "a")
+	outputfile = open(os.path.join(directory, "experiment2_{}_results.txt".format(datetime.date.today())), "a")
 
 	outputfile.write(str(ctime()) + "\n")
 	tic = time.time()
@@ -53,6 +54,7 @@ def main():
 	with open(fedorurls) as f:
 		lines = f.readlines()
 
+	filePath = os.path.join(directory, "temp.h5")
 	for line in lines:
 		fedoraobjurl = line.strip()
 		fedorah5url = fedoraobjurl + "/h5" 
@@ -64,10 +66,10 @@ def main():
 		fedora_sha = getFedoraSha(content)
 
 		# download h5 file 
-		call("wget " + fedorah5url + " -O temp.h5", shell=True)
+		call("wget " + fedorah5url + " -O " + filePath, shell=True)
 
 		# create sha-1
-		file_sha = sha1OfFile("temp.h5")
+		file_sha = sha1OfFile(filePath)
 
 		# compare sha-1 and update fedora object
 		if fedora_sha == file_sha:
@@ -78,7 +80,7 @@ def main():
 		updatestr = "PREFIX dc: <http://purl.org/dc/elements/1.1/> INSERT { <> dc:provenance \"" + sharesult + "\" . } WHERE { } "
 
 		updateFedoraBinary(updatestr, fedoraobjurl)
-		os.remove("temp.h5")
+		os.remove(filePath)
 
 	toc = time.time()
 	print str(toc-tic)
