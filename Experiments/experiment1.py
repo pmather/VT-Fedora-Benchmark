@@ -47,10 +47,10 @@ def createFedoraBinary(filepath, fedoraurl):
 
 def main():
 	fedoraurl = sys.argv[1]
-	h5dir = sys.argv[2]
+	h5dir = sys.argv[2] if len(sys.argv) > 2 else "."
 
-	outputfile = open("experiment1_{}.txt".format(datetime.date.today()), "a")
-	urlfile = open("fedoraurls.txt", "a")
+	outputfile = open(os.path.join(h5dir, "experiment1_{}_results.txt".format(datetime.date.today())), "a")
+	urlfile = open(os.path.join(h5dir, "fedoraurls.txt"), "a")
 
 	outputfile.write(str(ctime()) + "\n")
 	tic = time.time()
@@ -62,9 +62,10 @@ def main():
 	
 	for line in lines:
 		fileName = line.strip()
+		filePath = os.path.join(h5dir, fileName)
 
 		# read hdf5 file
-		f = h5py.File(fileName, 'r')
+		f = h5py.File(filePath, 'r')
 
 		if f.keys()[0] is not None:
 			datasets = f[f.keys()[0]]
@@ -78,10 +79,10 @@ def main():
 				c += 1
 
 			# run fits program 
-			call("~/fits-0.9.0/fits.sh -i " + fileName + " > " + fileName + "_fits.xml", shell=True)
+			call("~/fits-0.9.0/fits.sh -i " + filePath + " > " + filePath + "_fits.xml", shell=True)
 
 			# read fits xml
-			fitsxml = open(fileName + "_fits.xml", 'r').read()
+			fitsxml = open(filePath + "_fits.xml", 'r').read()
 			result = xmltodict.parse( fitsxml )
 			description = result['fits']['identification']['identity'][0]['@format']
 			format = result['fits']['identification']['identity'][0]['@mimetype']
@@ -105,14 +106,15 @@ def main():
 			# Create Fedora binary
 			if len(objecturl) > 0:
 				fileurl = objecturl + "/h5"
-				createFedoraBinary(fileName, fileurl)
+				createFedoraBinary(filePath, fileurl)
 				urlfile.write(objecturl+"\n")
 				print fileurl
 
-		os.remove(fileName)
-		os.remove(fileName + "_fits.xml")
+		os.remove(filePath)
+		os.remove(filePath + "_fits.xml")
 
 	toc = time.time()
+	print str(toc-tic)
 	outputfile.write(str(toc-tic) + "\n")
 	outputfile.write(str(ctime()) + "\n")
 	outputfile.close()
