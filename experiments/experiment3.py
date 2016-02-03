@@ -24,14 +24,13 @@ def multiple_sum(array):
 
 def main():
 	fedorurls = sys.argv[1]
-	directory = os.path.dirname(fedorurls)
 	
-	outputfile = open(os.path.join(directory, "experiment3_{}_results.txt".format(datetime.date.today())), "a")
+	outputfile = open("experiment3_{}_results.txt".format(datetime.date.today()), "a")
 
 	outputfile.write(str(ctime()) + "\n")
 	tic = time.time()
 
-	filePath = os.path.join(directory, "temp.h5")
+	fileName = "temp.h5"
 	with open(fedorurls) as f:
 		lines = f.readlines()
 
@@ -40,10 +39,10 @@ def main():
 		fedorah5url = fedoraobjurl + "/h5" 
 
 		# download h5 file 
-		call("wget " + fedorah5url + " -O " + filePath, shell=True)
+		call("wget " + fedorah5url + " -O " + fileName, shell=True)
 
 		# read hdf5 file
-		f = h5py.File(filePath, 'r')
+		f = h5py.File(fileName, 'r')
 
 		starttime = time.time()
 
@@ -56,7 +55,7 @@ def main():
 		endtime = time.time()
 		# print str(endtime - starttime)
 
-		os.remove(filePath)
+		os.remove(fileName)
 
 	toc = time.time()
 	print str(toc-tic)
