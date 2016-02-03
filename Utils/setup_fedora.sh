@@ -16,12 +16,15 @@ sudo apt-get upgrade -y
 sudo apt-get install openjdk-8-jdk -y
 sudo apt-get install maven -y
 
-sudo apt-get install tomcat8 tomcat8-admin -y
+echo JAVA_HOME=\"$(readlink -f /usr/bin/java | sed "s:bin/java::")\" >> ~/.bashrc
+source ~/.bashrc
+
+sudo apt-get install tomcat7 tomcat7-admin -y
 
 cd
 mkdir fedora-data
-sudo chown tomcat8:tomcat8 fedora-data
-sudo sed -i '0,/JAVA_OPTS=".*"/s//JAVA_OPTS=\"-Djava.awt.headless=true -Xmx512m -XX:MaxPermSize=512m -XX:+UseConcMarkSweepGC -Dfcrepo.home=~\/fedora-data\"/' etc/default/tomcat8
+sudo chown tomcat7:tomcat7 fedora-data
+sudo sed -i '0,/JAVA_OPTS=".*"/s//JAVA_OPTS=\"-Djava.awt.headless=true -Xmx512m -XX:MaxPermSize=512m -XX:+UseConcMarkSweepGC -Dfcrepo.home=~\/fedora-data\"/' /etc/default/tomcat7
 
 cd
 curl -s https://api.github.com/repos/fcrepo4/fcrepo4/releases \
@@ -29,7 +32,6 @@ curl -s https://api.github.com/repos/fcrepo4/fcrepo4/releases \
 	| head -n 1 \
 	| cut -d '"' -f 4 \
 	| xargs wget -O fedora.war
-sudo mv fedora /var/lib/tomcat8/webapps
+sudo mv fedora.war /var/lib/tomcat7/webapps
 
-sudo service tomcat8 restart
-
+sudo service tomcat7 restart
