@@ -1,0 +1,35 @@
+sudo add-apt-repository ppa:openjdk-r/ppa -y
+
+sudo apt-get update && apt-get install -y \
+	build-essential \
+	curl \
+	screen \
+	openssh-server \
+	software-properties-common \
+	vim \
+	wget \
+	htop tree zsh fish
+
+sudo apt-get update -y
+sudo apt-get upgrade -y
+
+sudo apt-get install openjdk-8-jdk -y
+sudo apt-get install maven -y
+
+sudo apt-get install tomcat8 tomcat8-admin -y
+
+cd
+mkdir fedora-data
+sudo chown tomcat8:tomcat8 fedora-data
+sudo sed -i '0,/JAVA_OPTS=".*"/s//JAVA_OPTS=\"-Djava.awt.headless=true -Xmx512m -XX:MaxPermSize=512m -XX:+UseConcMarkSweepGC -Dfcrepo.home=~\/fedora-data\"/' etc/default/tomcat8
+
+cd
+curl -s https://api.github.com/repos/fcrepo4/fcrepo4/releases \
+	| grep browser_download_url \
+	| head -n 1 \
+	| cut -d '"' -f 4 \
+	| xargs wget -O fedora.war
+sudo mv fedora /var/lib/tomcat8/webapps
+
+sudo service tomcat8 restart
+
