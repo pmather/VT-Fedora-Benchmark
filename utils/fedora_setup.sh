@@ -16,15 +16,17 @@ sudo apt-get upgrade -y
 sudo apt-get install openjdk-8-jdk -y
 sudo apt-get install maven -y
 
-echo JAVA_HOME=\"$(readlink -f /usr/bin/java | sed "s:bin/java::")\" >> ~/.bashrc
+echo export JAVA_HOME=\"$(readlink -f /usr/bin/java | sed "s:bin/java::" | sed "s:/jre/::")\" >> ~/.bashrc
 source ~/.bashrc
+sudo ln -s $(readlink -f /usr/bin/java | sed "s:bin/java::" | sed "s:/jre/::") /usr/lib/jvm/default-java
 
 sudo apt-get install tomcat7 tomcat7-admin -y
 
 cd
 mkdir fedora-data
 sudo chown tomcat7:tomcat7 fedora-data
-sudo sed -i '0,/JAVA_OPTS=".*"/s//JAVA_OPTS=\"-Djava.awt.headless=true -Xmx512m -XX:MaxPermSize=512m -XX:+UseConcMarkSweepGC -Dfcrepo.home=~\/fedora-data\"/' /etc/default/tomcat7
+sudo sed -i '0,/JAVA_OPTS=".*"/s//JAVA_OPTS=\"-Djava.awt.headless=true -Xmx512m -XX:MaxPermSize=512m -XX:+UseConcMarkSweepGC -Dfcrepo.home=${HOME}\/fedora-data\"/' /etc/default/tomcat7
+sudo sed -i "s:\${HOME}:${HOME}:" /etc/default/tomcat7
 
 cd
 curl -s https://api.github.com/repos/fcrepo4/fcrepo4/releases \
