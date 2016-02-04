@@ -29,7 +29,9 @@ sudo apt-get install openjdk-8-jdk -y
 rm get-pip.py
 
 cd
+sudo apt-get install mediainfo -y
 wget http://projects.iq.harvard.edu/files/fits/files/fits-0.9.0.zip?m=1449588471 -O fits-0.9.0.zip
 unzip fits-0.9.0.zip
 echo export PATH="$PATH:${HOME}/fits-0.9.0/" >> ~/.bashrc
 source ~/.bashrc
+chmod +x ~/fits-0.9.0/fits.sh
