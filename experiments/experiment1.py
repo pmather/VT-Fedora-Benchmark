@@ -5,12 +5,12 @@ import pycurl
 import sys,os
 import time
 import xmltodict
+import threading
 
 from io import BytesIO
 from socket import error as SocketError
 from subprocess import call
 from StringIO import StringIO    
-from time import ctime
 
 def downloadFromS3(filename):
 	s3 = boto3.client('s3')
@@ -59,10 +59,12 @@ def main():
 	datasetfilename = sys.argv[2]
 	gdriveDir = sys.argv[3]
 
-	outputfile = open("experiment1_{}_results.txt".format(datetime.date.today()), "a")
+	outputfile = open("experiment1_{}_results.csv".format(datetime.date.today()), "a")
 	urlfile = open("fedoraurls.txt", "a")
 
-	outputfile.write(str(ctime()) + "\n")
+	progress = []
+
+	start = str(datetime.datetime.now())
 	tic = time.time()
 
 	with open(datasetfilename) as f:
@@ -72,11 +74,14 @@ def main():
 		fileName = line.strip()
 
 		# downloadFromS3(fileName)
+		download = time.time()
 		downloadFromGDrive(gdriveDir, fileName)
+		progress.append("Download," + fileName + "," + str(download) + "," + str(time.time()))
 
 		# read hdf5 file
 		f = h5py.File(fileName, 'r')
 
+		processing = time.time()
 		if f.keys()[0] is not None:
 			datasets = f[f.keys()[0]]
 			channel_str = ""
@@ -102,7 +107,9 @@ def main():
 			# Create Fedora object
 			rdfdata = 'PREFIX dc: <http://purl.org/dc/elements/1.1/> <> dc:title "'+ fileName +'" . ' + \
 				fits_str + channel_str
+			progress.append("Processing," + fileName + "," + str(processing) + "," + str(time.time()))
 
+			ingestion = time.time()
 			objecturl = ""
 			for x in xrange(0, 5):
 				try:
@@ -117,16 +124,19 @@ def main():
 			if len(objecturl) > 0:
 				fileurl = objecturl + "/h5"
 				createFedoraBinary(fileName, fileurl)
+				progress.append("Ingestion," + fileName + "," + str(ingestion) + "," + str(time.time()))
 				urlfile.write(objecturl+"\n")
 				print fileurl
 
 		os.remove(fileName)
 		os.remove(fileName + "_fits.xml")
 
-	toc = time.time()
-	print str(toc-tic)
-	outputfile.write(str(toc-tic) + "\n")
-	outputfile.write(str(ctime()) + "\n")
+	duration = str(time.time() - tic)
+	end = str(datetime.datetime.now())
+	print duration
+	progress.insert(0, "OVERALL EXECUTION," + start + "," + duration + "," + end)
+	for line in progress:
+		outputfile.write(line + "\n")
 	outputfile.close()
 	urlfile.close()
 

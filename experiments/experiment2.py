@@ -8,8 +8,7 @@ import time
 from io import BytesIO
 from socket import error as SocketError
 from subprocess import call
-from StringIO import StringIO    
-from time import ctime
+from StringIO import StringIO
 
 def readFedoraObject(fedoraurl):	
 	storage = StringIO()
@@ -45,9 +44,11 @@ def sha1OfFile(filepath):
 def main():
 	fedorurls = sys.argv[1]
 
-	outputfile = open("experiment2_{}_results.txt".format(datetime.date.today()), "a")
+	outputfile = open("experiment2_{}_results.csv".format(datetime.date.today()), "a")
 
-	outputfile.write(str(ctime()) + "\n")
+	progress = []
+
+	start = str(datetime.datetime.now())
 	tic = time.time()
 
 	with open(fedorurls) as f:
@@ -59,13 +60,17 @@ def main():
 		fedorah5url = fedoraobjurl + "/h5" 
 	
 		# read fedora object
+		processing = time.time()
 		content = readFedoraObject(fedorah5url + "/fcr:metadata")
 
 		# read fedora sha
 		fedora_sha = getFedoraSha(content)
 
 		# download h5 file 
+		download = time.time()
 		call("wget " + fedorah5url + " -O " + fileName, shell=True)
+		downloadelapsed = time.time() - download
+		progress.append("Download," + fileName + "," + str(download) + "," + str(download + downloadelapsed))
 
 		# create sha-1
 		file_sha = sha1OfFile(fileName)
@@ -77,14 +82,19 @@ def main():
 			sharesult = "digest check failed at " + datetime.datetime.utcnow().isoformat() + 'Z'
 		
 		updatestr = "PREFIX dc: <http://purl.org/dc/elements/1.1/> INSERT { <> dc:provenance \"" + sharesult + "\" . } WHERE { } "
+		progress.append("Processing," + fileName + "," + str(processing) + "," + str(time.time() - downloadelapsed))
 
+		ingestion = time.time()
 		updateFedoraBinary(updatestr, fedoraobjurl)
+		progress.append("Ingestion," + fileName + "," + str(ingestion) + "," + str(time.time()))
 		os.remove(fileName)
 
-	toc = time.time()
-	print str(toc-tic)
-	outputfile.write(str(toc-tic) + "\n")
-	outputfile.write(str(ctime()) + "\n")
+	duration = str(time.time() - tic)
+	end = str(datetime.datetime.now())
+	print duration
+	progress.insert(0, "OVERALL EXECUTION," + start + "," + duration + "," + end)
+	for line in progress:
+		outputfile.write(line + "\n")
 	outputfile.close()
 
 if __name__ == "__main__": main()

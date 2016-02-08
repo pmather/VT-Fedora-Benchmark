@@ -9,7 +9,6 @@ from io import BytesIO
 from socket import error as SocketError
 from subprocess import call
 from StringIO import StringIO
-from time import ctime
 
 def multiple_sum(array):
 	rows = array.shape[0]
@@ -25,9 +24,11 @@ def multiple_sum(array):
 def main():
 	fedorurls = sys.argv[1]
 	
-	outputfile = open("experiment3_{}_results.txt".format(datetime.date.today()), "a")
+	outputfile = open("experiment3_{}_results.csv".format(datetime.date.today()), "a")
 
-	outputfile.write(str(ctime()) + "\n")
+	progress = []
+
+	start = str(datetime.datetime.now())
 	tic = time.time()
 
 	fileName = "temp.h5"
@@ -39,12 +40,13 @@ def main():
 		fedorah5url = fedoraobjurl + "/h5" 
 
 		# download h5 file 
+		download = time.time()
 		call("wget " + fedorah5url + " -O " + fileName, shell=True)
+		progress.append("Download," + fileName + "," + str(download) + "," + str(time.time()))
 
 		# read hdf5 file
+		processing = time.time()
 		f = h5py.File(fileName, 'r')
-
-		starttime = time.time()
 
 		if f.keys()[0] is not None:
 			datasets = f[f.keys()[0]]
@@ -52,15 +54,17 @@ def main():
 				a = datasets[channel]
 				np.fft.fft(a)
 				multiple_sum(a)
-		endtime = time.time()
+		progress.append("Processing," + fileName + "," + str(processing) + "," + str(time.time()))
 		# print str(endtime - starttime)
 
 		os.remove(fileName)
 
-	toc = time.time()
-	print str(toc-tic)
-	outputfile.write(str(toc-tic) + "\n")
-	outputfile.write(str(ctime()) + "\n")
+	duration = str(time.time() - tic)
+	end = str(datetime.datetime.now())
+	print duration
+	progress.insert(0, "OVERALL EXECUTION," + start + "," + duration + "," + end)
+	for line in progress:
+		outputfile.write(line + "\n")
 	outputfile.close()
 
 if __name__ == "__main__": main()
