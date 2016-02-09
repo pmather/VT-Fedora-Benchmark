@@ -42,7 +42,7 @@ def main():
 		# download h5 file 
 		download = time.time()
 		call("wget " + fedorah5url + " -O " + fileName, shell=True)
-		progress.append("Download," + fileName + "," + str(download) + "," + str(time.time()))
+		progress.append("Download," + fedoraobjurl + "," + str(download) + "," + str(time.time()))
 
 		# read hdf5 file
 		processing = time.time()
@@ -54,7 +54,7 @@ def main():
 				a = datasets[channel]
 				np.fft.fft(a)
 				multiple_sum(a)
-		progress.append("Processing," + fileName + "," + str(processing) + "," + str(time.time()))
+		progress.append("Processing," + fedoraobjurl + "," + str(processing) + "," + str(time.time()))
 		# print str(endtime - starttime)
 
 		os.remove(fileName)
