@@ -70,7 +70,7 @@ def main():
 		download = time.time()
 		call("wget " + fedorah5url + " -O " + fileName, shell=True)
 		downloadelapsed = time.time() - download
-		progress.append("Download," + fileName + "," + str(download) + "," + str(download + downloadelapsed))
+		progress.append("Download," + fedoraobjurl + "," + str(download) + "," + str(download + downloadelapsed))
 
 		# create sha-1
 		file_sha = sha1OfFile(fileName)
@@ -82,11 +82,11 @@ def main():
 			sharesult = "digest check failed at " + datetime.datetime.utcnow().isoformat() + 'Z'
 		
 		updatestr = "PREFIX dc: <http://purl.org/dc/elements/1.1/> INSERT { <> dc:provenance \"" + sharesult + "\" . } WHERE { } "
-		progress.append("Processing," + fileName + "," + str(processing) + "," + str(time.time() - downloadelapsed))
+		progress.append("Processing," + fedoraobjurl + "," + str(processing) + "," + str(time.time() - downloadelapsed))
 
 		ingestion = time.time()
 		updateFedoraBinary(updatestr, fedoraobjurl)
-		progress.append("Ingestion," + fileName + "," + str(ingestion) + "," + str(time.time()))
+		progress.append("Ingestion," + fedoraobjurl + "," + str(ingestion) + "," + str(time.time()))
 		os.remove(fileName)
 
 	duration = str(time.time() - tic)
