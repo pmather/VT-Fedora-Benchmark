@@ -94,7 +94,7 @@ def main():
 				c += 1
 
 			# run fits program 
-			call("~/fits-0.9.0/fits.sh -i " + fileName + " > " + fileName + "_fits.xml", shell=True)
+			call("fits-0.9.0/fits.sh -i " + fileName + " > " + fileName + "_fits.xml", shell=True)
 
 			# read fits xml
 			fitsxml = open(fileName + "_fits.xml", 'r').read()
