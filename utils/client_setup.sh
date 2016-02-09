@@ -32,6 +32,13 @@ cd
 sudo apt-get install mediainfo -y
 wget http://projects.iq.harvard.edu/files/fits/files/fits-0.9.0.zip?m=1449588471 -O fits-0.9.0.zip
 unzip fits-0.9.0.zip
-echo export PATH="$PATH:/fits-0.9.0/" >> ~/.bashrc
-source ~/.bashrc
 chmod +x fits-0.9.0/fits.sh
+
+if [ -d "vt-sil/experiments" ]; then
+	mv fits-0.9.0.zip vt-sil/experiments
+	mv fits-0.9.0 vt-sil/experiments
+	cd vt-sil/experiments
+fi
+
+echo export PATH="$PATH:${PWD}/fits-0.9.0/" >> ~/.bashrc
+source ~/.bashrc
