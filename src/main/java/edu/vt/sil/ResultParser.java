@@ -3,6 +3,7 @@ package edu.vt.sil;
 import edu.vt.sil.entities.Event;
 import edu.vt.sil.entities.ExperimentResult;
 import edu.vt.sil.processor.EventComparisonProcessor;
+import edu.vt.sil.processor.OverlapProcessor;
 import edu.vt.sil.processor.Processor;
 import edu.vt.sil.processor.SimpleDurationProcessor;
 
@@ -39,7 +40,8 @@ public class ResultParser {
         Path output = Paths.get(directory, String.format("%s_processed.csv", prefix));
         processResults(output, results,
                 new SimpleDurationProcessor(),
-                new EventComparisonProcessor());
+                new EventComparisonProcessor(),
+                new OverlapProcessor());
     }
 
     private static void processResults(Path output, Map<String, List<ExperimentResult>> results, Processor... processors) throws IOException {
@@ -81,9 +83,14 @@ public class ResultParser {
         String[] parts = content.get(0).split(",");
         ExperimentResult result = new ExperimentResult(resultName, parts[1], parts[3], Double.parseDouble(parts[2]), new ArrayList<>());
         content.stream().skip(1).forEach(l -> {
-            String[] smallParts = l.split(",");
-            Event event = new Event(smallParts[1], smallParts[0], Double.parseDouble(smallParts[2]), Double.parseDouble(smallParts[3]));
-            result.events.add(event);
+            try {
+                String[] smallParts = l.split(",");
+                Event event = new Event(smallParts[1], smallParts[0], Double.parseDouble(smallParts[2]), Double.parseDouble(smallParts[3]));
+                result.events.add(event);
+            } catch (Exception e) {
+                System.out.println("Error occurred while reading file [ " + resultName + " ] line [ " + l + " ]");
+                throw e;
+            }
         });
         return result;
     }

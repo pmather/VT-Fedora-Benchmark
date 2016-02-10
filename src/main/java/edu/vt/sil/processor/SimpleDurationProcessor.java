@@ -31,7 +31,7 @@ public class SimpleDurationProcessor implements Processor {
             double average = 0;
             for (ExperimentResult result : results.get(vm)) {
                 min = Math.min(min, result.duration);
-                max = Math.max(min, result.duration);
+                max = Math.max(max, result.duration);
                 average += result.duration;
             }
             average /= results.get(vm).size();
