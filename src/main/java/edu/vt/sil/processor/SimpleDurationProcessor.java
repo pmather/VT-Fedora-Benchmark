@@ -18,26 +18,25 @@ public class SimpleDurationProcessor implements Processor {
     }
 
     @Override
-    public String getHeaders() {
-        return "Machines,Min,Average,Max";
+    public String getHeaders(Map<String, List<ExperimentResult>> results) {
+        return "VMs,Min,Average,Max";
     }
 
     @Override
-    public List<String> process(Map<String, Map<String, ExperimentResult>> results) {
+    public List<String> process(Map<String, List<ExperimentResult>> results) {
         List<String> processed = new ArrayList<>();
-        for (String machine : results.keySet()) {
+        for (String vm : results.keySet()) {
             double min = Double.MAX_VALUE;
             double max = Double.MIN_VALUE;
             double average = 0;
-            for (ExperimentResult result : results.get(machine).values()) {
+            for (ExperimentResult result : results.get(vm)) {
                 min = Math.min(min, result.duration);
                 max = Math.max(min, result.duration);
                 average += result.duration;
             }
-            average /= results.get(machine).size();
-            processed.add(String.format("%s,%s,%s,%s", machine, min, average, max));
+            average /= results.get(vm).size();
+            processed.add(String.format("%s,%s,%s,%s", vm, min, average, max));
         }
-        Collections.sort(processed);
         return processed;
     }
 }
