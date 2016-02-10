@@ -52,9 +52,16 @@ public class RemoteFileFetcher {
             System.exit(0);
         }
 
+        Path dir = resultsDir.resolve(String.valueOf(hosts.length));
+        if (Files.exists(dir)) {
+            System.out.println(String.format("Please delete directory: %s", dir.toString()));
+            System.exit(0);
+        }
+        Files.createDirectory(dir);
+
         String suffix = args.length == 5 ? args[4] : ".csv";
 
-        fetchFiles(hosts, keyName, prefix, resultsDir, suffix);
+        fetchFiles(hosts, keyName, prefix, dir, suffix);
     }
 
     private static void fetchFiles(String[] hosts, String keyName, String prefix, Path resultsDir, String suffix) throws IOException {
