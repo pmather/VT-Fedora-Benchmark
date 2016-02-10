@@ -12,7 +12,7 @@ import java.util.Map;
 public interface Processor {
     String getDescription();
 
-    String getHeaders();
+    String getHeaders(Map<String, List<ExperimentResult>> results);
 
-    List<String> process(Map<String, Map<String, ExperimentResult>> results);
+    List<String> process(Map<String, List<ExperimentResult>> results);
 }

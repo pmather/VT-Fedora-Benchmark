@@ -2,15 +2,13 @@ package edu.vt.sil;
 
 import edu.vt.sil.entities.Event;
 import edu.vt.sil.entities.ExperimentResult;
+import edu.vt.sil.processor.EventComparisonProcessor;
 import edu.vt.sil.processor.Processor;
 import edu.vt.sil.processor.SimpleDurationProcessor;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Author: dedocibula
@@ -36,19 +34,21 @@ public class ResultParser {
             System.exit(0);
         }
 
-        Map<String, Map<String, ExperimentResult>> results = extractExperimentResults(resultsDir, prefix);
+        Map<String, List<ExperimentResult>> results = extractExperimentResults(resultsDir, prefix);
 
         Path output = Paths.get(directory, String.format("%s_processed.csv", prefix));
-        processResults(output, results, new SimpleDurationProcessor());
+        processResults(output, results,
+                new SimpleDurationProcessor(),
+                new EventComparisonProcessor());
     }
 
-    private static void processResults(Path output, Map<String, Map<String, ExperimentResult>> results, Processor... processors) throws IOException {
+    private static void processResults(Path output, Map<String, List<ExperimentResult>> results, Processor... processors) throws IOException {
         if (processors == null)
             return;
 
         for (Processor processor : processors) {
             String description = processor.getDescription();
-            String headers = processor.getHeaders();
+            String headers = processor.getHeaders(results);
             List<String> content = processor.process(results);
             if (description != null)
                 content.add(0, description);
@@ -59,15 +59,15 @@ public class ResultParser {
         }
     }
 
-    private static Map<String, Map<String, ExperimentResult>> extractExperimentResults(Path resultsDir, String prefix) throws IOException {
-        Map<String, Map<String, ExperimentResult>> results = new HashMap<>();
+    private static Map<String, List<ExperimentResult>> extractExperimentResults(Path resultsDir, String prefix) throws IOException {
+        Map<String, List<ExperimentResult>> results = new TreeMap<>();
         Files.list(resultsDir).filter(dir -> Files.isDirectory(dir)).forEach(dir -> {
             String dirName = dir.getFileName().toString();
-            results.put(dirName, new HashMap<>());
+            results.put(dirName, new ArrayList<>());
             try {
                 Files.list(dir).filter(f -> f.getFileName().toString().startsWith(prefix)).forEach(f -> {
                     try {
-                        results.get(dirName).put(f.getFileName().toString(), processContent(Files.readAllLines(f)));
+                        results.get(dirName).add(processContent(f.getFileName().toString(), Files.readAllLines(f)));
                     } catch (IOException ignored) {
                     }
                 });
@@ -77,9 +77,9 @@ public class ResultParser {
         return results;
     }
 
-    private static ExperimentResult processContent(List<String> content) {
+    private static ExperimentResult processContent(String resultName, List<String> content) {
         String[] parts = content.get(0).split(",");
-        ExperimentResult result = new ExperimentResult(parts[1], parts[3], Double.parseDouble(parts[2]), new ArrayList<>());
+        ExperimentResult result = new ExperimentResult(resultName, parts[1], parts[3], Double.parseDouble(parts[2]), new ArrayList<>());
         content.stream().skip(1).forEach(l -> {
             String[] smallParts = l.split(",");
             Event event = new Event(smallParts[1], smallParts[0], Double.parseDouble(smallParts[2]), Double.parseDouble(smallParts[3]));
