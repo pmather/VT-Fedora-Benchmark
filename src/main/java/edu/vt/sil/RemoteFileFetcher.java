@@ -65,12 +65,11 @@ public class RemoteFileFetcher {
     }
 
     private static void fetchFiles(String[] hosts, String keyName, String prefix, Path resultsDir, String suffix) throws IOException {
-        SSHClient client = new SSHClient();
-        client.loadKnownHosts();
-
-        KeyProvider keys = client.loadKeys(System.getProperty("user.home") + File.separator + ".ssh" + File.separator + keyName);
-
         for (String host : hosts) {
+            SSHClient client = new SSHClient();
+            client.loadKnownHosts();
+            KeyProvider keys = client.loadKeys(System.getProperty("user.home") + File.separator + ".ssh" + File.separator + keyName);
+
             client.connect(host);
             try {
                 String[] files;
