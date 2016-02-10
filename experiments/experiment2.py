@@ -5,8 +5,6 @@ import requests
 import sys,os
 import time
 
-from io import BytesIO
-from socket import error as SocketError
 from subprocess import call
 from StringIO import StringIO
 

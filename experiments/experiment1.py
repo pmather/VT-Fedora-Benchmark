@@ -5,9 +5,7 @@ import pycurl
 import sys,os
 import time
 import xmltodict
-import threading
 
-from io import BytesIO
 from socket import error as SocketError
 from subprocess import call
 from StringIO import StringIO    

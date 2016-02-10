@@ -1,14 +1,10 @@
 import datetime
 import h5py
 import numpy as np
-import pycurl
 import sys,os
 import time
 
-from io import BytesIO
-from socket import error as SocketError
 from subprocess import call
-from StringIO import StringIO
 
 def multiple_sum(array):
 	rows = array.shape[0]

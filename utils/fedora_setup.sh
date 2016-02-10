@@ -1,3 +1,4 @@
+#!/bin/bash
 sudo add-apt-repository ppa:openjdk-r/ppa -y
 
 sudo apt-get update && apt-get install -y \
