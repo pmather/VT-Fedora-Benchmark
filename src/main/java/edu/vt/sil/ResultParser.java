@@ -18,7 +18,7 @@ import java.util.*;
 public class ResultParser {
     public static void main(String[] args) throws IOException {
         if (args.length != 2) {
-            System.out.println("Please use parameters: <results directory> <results prefix>");
+            System.out.println("Please use parameters: <results directory> <results descriptor>");
             System.exit(0);
         }
 
@@ -29,15 +29,15 @@ public class ResultParser {
             System.exit(0);
         }
 
-        String prefix = args[1];
-        if (prefix == null || prefix.isEmpty()) {
-            System.out.println("Cannot use null/empty prefix");
+        String descriptor = args[1];
+        if (descriptor == null || descriptor.isEmpty()) {
+            System.out.println("Cannot use null/empty descriptor");
             System.exit(0);
         }
 
-        Map<String, List<ExperimentResult>> results = extractExperimentResults(resultsDir, prefix);
+        Map<String, List<ExperimentResult>> results = extractExperimentResults(resultsDir, descriptor);
 
-        Path output = Paths.get(directory, String.format("%s_processed.csv", prefix));
+        Path output = Paths.get(directory, String.format("%s_processed.csv", descriptor));
         processResults(output, results,
                 new SimpleDurationProcessor(),
                 new EventComparisonProcessor(),
@@ -61,13 +61,13 @@ public class ResultParser {
         }
     }
 
-    private static Map<String, List<ExperimentResult>> extractExperimentResults(Path resultsDir, String prefix) throws IOException {
+    private static Map<String, List<ExperimentResult>> extractExperimentResults(Path resultsDir, String descriptor) throws IOException {
         Map<String, List<ExperimentResult>> results = new TreeMap<>();
         Files.list(resultsDir).filter(dir -> Files.isDirectory(dir)).forEach(dir -> {
             String dirName = dir.getFileName().toString();
             results.put(dirName, new ArrayList<>());
             try {
-                Files.list(dir).filter(f -> f.getFileName().toString().startsWith(prefix)).forEach(f -> {
+                Files.list(dir).filter(f -> f.getFileName().toString().contains(descriptor)).forEach(f -> {
                     try {
                         results.get(dirName).add(processContent(f.getFileName().toString(), Files.readAllLines(f)));
                     } catch (IOException ignored) {
