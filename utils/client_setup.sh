@@ -19,6 +19,7 @@ sudo python get-pip.py
 sudo apt-get install unzip -y
 sudo apt-get install libpcap-dev -y
 sudo pip install boto3
+sudo pip install pika
 sudo apt-get install python-dev -y
 sudo apt-get install python-numpy python-nose -y
 sudo apt-get install python-scipy -y
