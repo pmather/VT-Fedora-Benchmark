@@ -8,5 +8,6 @@ public enum RabbitMQCommand {
     EXPERIMENT1,
     EXPERIMENT2,
     EXPERIMENT3,
-    CLEAR_ALL
+    CLEAR_ALL,
+    SEED
 }

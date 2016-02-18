@@ -3,7 +3,13 @@ package edu.vt.sil;
 import edu.vt.sil.messaging.RabbitMQCommand;
 import edu.vt.sil.messaging.RabbitMQProducer;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
@@ -41,7 +47,7 @@ public class ExperimentAdministrator {
                 String line;
                 printHeader();
                 while (!(line = scanner.nextLine()).isEmpty())
-                    sendCommand(producer, line);
+                    handleInput(producer, line);
             }
         }
     }
@@ -53,10 +59,11 @@ public class ExperimentAdministrator {
         System.out.println("    experiment2 <parameters>");
         System.out.println("    experiment3 <parameters>");
         System.out.println("    clear_all");
+        System.out.println("    seed <fedora_url> <input_file> <number_of_consumers>");
         System.out.println("--------------------------------");
     }
 
-    private static void sendCommand(RabbitMQProducer producer, String line) {
+    private static void handleInput(RabbitMQProducer producer, String line) {
         String[] parts = line.trim().split(" ");
         if (parts.length < 1) {
             System.out.println("Too few arguments");
@@ -69,8 +76,60 @@ public class ExperimentAdministrator {
             System.out.println("Unrecognized command: " + parts[0]);
             return;
         }
-        producer.sendControlMessage(command,
-                Arrays.stream(parts).skip(1).collect(Collectors.joining("|,|")));
-        System.out.println("Command sent. Enter new command (CTRL+C to exit):");
+
+        if (command == RabbitMQCommand.SEED) {
+            seedWorkItems(producer, Arrays.copyOfRange(parts, 1, parts.length));
+        } else {
+            producer.sendControlMessage(command,
+                    Arrays.stream(parts).skip(1).collect(Collectors.joining("|,|")));
+            System.out.println("Command sent. Enter new command (CTRL+C to exit):");
+        }
+    }
+
+    private static void seedWorkItems(RabbitMQProducer producer, String[] arguments) {
+        String fedoraUrl = arguments[0];
+        if (fedoraUrl == null || fedoraUrl.isEmpty()) {
+            System.out.println("Cannot use null/empty fedora url");
+            return;
+        }
+
+        String input = arguments[1];
+        Path inputFile = Paths.get(input);
+        if (Files.notExists(inputFile, LinkOption.NOFOLLOW_LINKS) || !Files.isRegularFile(inputFile)) {
+            System.out.println(String.format("No input file: %s", input));
+            return;
+        }
+
+        List<String> lines;
+        try {
+            lines = Files.readAllLines(inputFile);
+        } catch (IOException e) {
+            System.out.println(String.format("File not readable %s", input));
+            return;
+        }
+
+        int workerCount;
+        try {
+            workerCount = Integer.parseInt(arguments[2]);
+        } catch (NumberFormatException e) {
+            System.out.println(String.format("Illegal number of workers %s", arguments[2]));
+            return;
+        }
+
+        lines.forEach(producer::sendWorkItem);
+        for (int i = 0; i < workerCount; i++)
+            producer.sendWorkItem("");
+        lines.stream()
+                .map(l -> String.format("%s/%s", fedoraUrl, l.substring(0, l.length() - 3)))
+                .forEach(producer::sendWorkItem);
+        for (int i = 0; i < workerCount; i++)
+            producer.sendWorkItem("");
+        lines.stream()
+                .map(l -> String.format("%s/%s", fedoraUrl, l.substring(0, l.length() - 3)))
+                .forEach(producer::sendWorkItem);
+        for (int i = 0; i < workerCount; i++)
+            producer.sendWorkItem("");
+
+        System.out.println("Work Items seeded. Enter new command (CTRL+C to exit)");
     }
 }
