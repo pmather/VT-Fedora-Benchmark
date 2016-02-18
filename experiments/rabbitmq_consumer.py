@@ -2,14 +2,19 @@ import pika
 import sys
 import traceback
 
+rabbitmqurl = None
+rabbitmquser = None
+rabbitmqpassword = None
+
+
 def check_params(params, expected):
     if len(params) < expected:
         print "Illegal number of parameter. Expected number is " + expected
         return False
     return True
 
+
 def handleMessage(ch, method, properties, body):
-    print properties
     if not properties.headers and "command" not in properties.headers:
         print "Unrecognized message"
         return
@@ -21,17 +26,17 @@ def handleMessage(ch, method, properties, body):
             if not check_params(params, 3):
                 return
             import experiment1
-            experiment1.main(params[0], params[1], params[2])
+            experiment1.main(params[0], params[1], params[2], rabbitmqurl, rabbitmquser, rabbitmqpassword)
         elif command == "EXPERIMENT2":
             if not check_params(params, 1):
                 return
             import experiment2
-            experiment2.main(params[0])
+            experiment2.main(params[0], rabbitmqurl, rabbitmquser, rabbitmqpassword)
         elif command == "EXPERIMENT3":
             if not check_params(params, 1):
                 return
             import experiment3
-            experiment3.main(params[0])
+            experiment3.main(params[0], rabbitmqurl, rabbitmquser, rabbitmqpassword)
         elif command == "CLEAR_ALL":
             import clear_all
             clear_all.main("fedoraurls.txt")
@@ -42,6 +47,9 @@ def handleMessage(ch, method, properties, body):
 
 
 def main():
+    global rabbitmqurl
+    global rabbitmquser
+    global rabbitmqpassword
     rabbitmqurl = sys.argv[1]
     rabbitmquser = sys.argv[2]
     rabbitmqpassword = sys.argv[3]
@@ -61,5 +69,6 @@ def main():
 
     channel.basic_consume(handleMessage, queue=queue_name, no_ack=True)
     channel.start_consuming()
+
 
 if __name__ == "__main__": main()

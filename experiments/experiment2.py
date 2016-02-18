@@ -11,10 +11,11 @@ from StringIO import StringIO
 
 
 class RabbitMQClient(object):
-    def __init__(self, queuename):
+    def __init__(self, rabbitmqurl, username, password, queuename):
         super(RabbitMQClient, self).__init__()
         self.queuename = queuename
-        self.connection = pika.BlockingConnection()
+        credentials = pika.PlainCredentials(username, password)
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmqurl, credentials=credentials))
         self.channel = self.connection.channel()
         self.delivery_tag = None
 
@@ -69,11 +70,11 @@ def sha1OfFile(filepath):
         return hashlib.sha1(f.read()).hexdigest()
 
 
-def main(queuename):
+def main(queuename, rabbitmqurl, username, password):
     outputfile = open("experiment2_{}_results.csv".format(datetime.date.today()), "a")
 
     progress = []
-    rabbitMq = RabbitMQClient(queuename)
+    rabbitMq = RabbitMQClient(rabbitmqurl, username, password, queuename)
 
     start = str(datetime.datetime.now())
     tic = time.time()
@@ -125,4 +126,4 @@ def main(queuename):
     outputfile.close()
 
 
-if __name__ == "__main__": main(sys.argv[1])
+if __name__ == "__main__": main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
