@@ -13,7 +13,7 @@ import java.util.Map;
  */
 public class RabbitMQProducer implements AutoCloseable {
     private final static String TOPIC_NAME = "control_topic";
-    private final static String QUEUE_NAME = "work_topic";
+    private final static String QUEUE_NAME = "work_queue";
 
     private Connection connection;
     private Channel channel;

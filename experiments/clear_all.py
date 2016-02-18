@@ -9,9 +9,7 @@ def deleteFedoraObject(fedoraurl):
 	c.perform()
 	c.close()
 
-def main():
-	fedoraurls = sys.argv[1]
-
+def main(fedoraurls):
 	with open(fedoraurls) as f:
 		lines = f.readlines()
 
@@ -20,6 +18,7 @@ def main():
 
 		print "Deleting " + fileurl
 		deleteFedoraObject(fileurl)
+		deleteFedoraObject(fileurl + "/fcr:tombstone")
 		print "Deletion successful"
 
 	for file in os.listdir("."):
@@ -27,4 +26,4 @@ def main():
 			os.remove(file)
 	os.remove(fedoraurls)
 
-if __name__ == "__main__": main()
+if __name__ == "__main__": main(sys.argv[1])

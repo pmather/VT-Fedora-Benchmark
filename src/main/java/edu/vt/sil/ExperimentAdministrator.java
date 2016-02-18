@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 public class ExperimentAdministrator {
     public static void main(String[] args) throws Exception {
         if (args.length != 3) {
-            System.out.println("Please use parameters: <rabbitmq-host> <userName> <password>");
+            System.out.println("Please use parameters: <rabbitmq-host> <user_name> <password>");
             System.exit(0);
         }
 
@@ -26,7 +26,7 @@ public class ExperimentAdministrator {
 
         String userName = args[1];
         if (userName == null || userName.isEmpty()) {
-            System.out.println("Cannot use null/empty userName");
+            System.out.println("Cannot use null/empty user_name");
             System.exit(0);
         }
 
