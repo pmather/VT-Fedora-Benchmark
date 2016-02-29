@@ -2,14 +2,12 @@ import pika
 import sys
 import traceback
 
-rabbitmqurl = None
-rabbitmquser = None
-rabbitmqpassword = None
+connection = None
 
 
 def check_params(params, expected):
     if len(params) < expected:
-        print "Illegal number of parameter. Expected number is " + expected
+        print "Illegal number of parameter. Expected number is " + str(expected)
         return False
     return True
 
@@ -26,17 +24,17 @@ def handleMessage(ch, method, properties, body):
             if not check_params(params, 3):
                 return
             import experiment1
-            experiment1.main(params[0], params[1], params[2], rabbitmqurl, rabbitmquser, rabbitmqpassword)
+            experiment1.main(params[0], params[1], params[2], connection)
         elif command == "EXPERIMENT2":
             if not check_params(params, 1):
                 return
             import experiment2
-            experiment2.main(params[0], rabbitmqurl, rabbitmquser, rabbitmqpassword)
+            experiment2.main(params[0], connection)
         elif command == "EXPERIMENT3":
             if not check_params(params, 1):
                 return
             import experiment3
-            experiment3.main(params[0], rabbitmqurl, rabbitmquser, rabbitmqpassword)
+            experiment3.main(params[0], connection)
         elif command == "CLEAR_ALL":
             import clear_all
             clear_all.main("fedoraurls.txt")
@@ -47,9 +45,7 @@ def handleMessage(ch, method, properties, body):
 
 
 def main():
-    global rabbitmqurl
-    global rabbitmquser
-    global rabbitmqpassword
+    global connection
     rabbitmqurl = sys.argv[1]
     rabbitmquser = sys.argv[2]
     rabbitmqpassword = sys.argv[3]
