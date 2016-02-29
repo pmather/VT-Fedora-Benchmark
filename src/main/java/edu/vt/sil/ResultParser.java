@@ -18,21 +18,21 @@ import java.util.*;
 public class ResultParser {
     public static void main(String[] args) throws IOException {
         if (args.length != 2) {
-            System.out.println("Please use parameters: <results directory> <results descriptor>");
-            System.exit(0);
+            System.out.println("Please specify parameters: <results_directory> <results_descriptor>");
+            return;
         }
 
         String directory = args[0];
         Path resultsDir = Paths.get(directory);
         if (Files.notExists(resultsDir, LinkOption.NOFOLLOW_LINKS) || !Files.isDirectory(resultsDir)) {
             System.out.println(String.format("No directory: %s", directory));
-            System.exit(0);
+            return;
         }
 
         String descriptor = args[1];
         if (descriptor == null || descriptor.isEmpty()) {
             System.out.println("Cannot use null/empty descriptor");
-            System.exit(0);
+            return;
         }
 
         Map<String, List<ExperimentResult>> results = extractExperimentResults(resultsDir, descriptor);
