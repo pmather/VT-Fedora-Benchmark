@@ -4,10 +4,7 @@ import edu.vt.sil.messaging.RabbitMQCommand;
 import edu.vt.sil.messaging.RabbitMQProducer;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
@@ -94,9 +91,15 @@ public class ExperimentAdministrator {
         }
 
         String input = arguments[1];
-        Path inputFile = Paths.get(input);
-        if (Files.notExists(inputFile, LinkOption.NOFOLLOW_LINKS) || !Files.isRegularFile(inputFile)) {
-            System.out.println(String.format("No input file: %s", input));
+        Path inputFile;
+        try {
+            inputFile = Paths.get(input);
+            if (Files.notExists(inputFile, LinkOption.NOFOLLOW_LINKS) || !Files.isRegularFile(inputFile)) {
+                System.out.println(String.format("No input file: %s", input));
+                return;
+            }
+        } catch (InvalidPathException e) {
+            System.out.println(e.getMessage());
             return;
         }
 
@@ -119,16 +122,13 @@ public class ExperimentAdministrator {
         lines.forEach(producer::sendWorkItem);
         for (int i = 0; i < workerCount; i++)
             producer.sendWorkItem("");
-        lines.stream()
-                .map(l -> String.format("%s/%s", fedoraUrl, l.substring(0, l.length() - 3)))
-                .forEach(producer::sendWorkItem);
-        for (int i = 0; i < workerCount; i++)
-            producer.sendWorkItem("");
-        lines.stream()
-                .map(l -> String.format("%s/%s", fedoraUrl, l.substring(0, l.length() - 3)))
-                .forEach(producer::sendWorkItem);
-        for (int i = 0; i < workerCount; i++)
-            producer.sendWorkItem("");
+        for (int j = 0; j < 2; j++) {
+            lines.stream()
+                    .map(l -> String.format("%s/%s", fedoraUrl, l.substring(0, l.length() - 3)))
+                    .forEach(producer::sendWorkItem);
+            for (int i = 0; i < workerCount; i++)
+                producer.sendWorkItem("");
+        }
 
         System.out.println("Work Items seeded. Enter new command (CTRL+C to exit)");
     }

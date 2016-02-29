@@ -13,11 +13,10 @@ from StringIO import StringIO
 
 
 class RabbitMQClient(object):
-    def __init__(self, rabbitmqurl, username, password, queuename):
+    def __init__(self, connection, queuename):
         super(RabbitMQClient, self).__init__()
         self.queuename = queuename
-        credentials = pika.PlainCredentials(username, password)
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmqurl, credentials=credentials))
+        self.connection = connection
         self.channel = self.connection.channel()
         self.delivery_tag = None
 
@@ -35,7 +34,6 @@ class RabbitMQClient(object):
     def _disconnect(self):
         self.channel.basic_ack(self.delivery_tag)
         self.channel.close()
-        self.connection.close()
 
 
 def downloadFromS3(filename):
@@ -82,12 +80,12 @@ def createFedoraBinary(filepath, fedoraurl):
     return content
 
 
-def main(fedoraurl, gdriveDir, queuename, rabbitmqurl, username, password):
+def main(fedoraurl, gdriveDir, queuename, connection):
     outputfile = open("experiment1_{}_results.csv".format(datetime.date.today()), "a")
     urlfile = open("fedoraurls.txt", "a")
 
     progress = []
-    rabbitMq = RabbitMQClient(rabbitmqurl, username, password, queuename)
+    rabbitMq = RabbitMQClient(connection, queuename)
 
     start = str(datetime.datetime.now())
     tic = time.time()
@@ -166,4 +164,7 @@ def main(fedoraurl, gdriveDir, queuename, rabbitmqurl, username, password):
     urlfile.close()
 
 
-if __name__ == "__main__": main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
+if __name__ == "__main__":
+    credentials = pika.PlainCredentials(sys.argv[5], sys.argv[6])
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=sys.argv[4], credentials=credentials))
+    main(sys.argv[1], sys.argv[2], sys.argv[3], connection)

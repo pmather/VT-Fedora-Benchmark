@@ -9,11 +9,10 @@ from subprocess import call
 
 
 class RabbitMQClient(object):
-    def __init__(self, rabbitmqurl, username, password, queuename):
+    def __init__(self, connection, queuename):
         super(RabbitMQClient, self).__init__()
         self.queuename = queuename
-        credentials = pika.PlainCredentials(username, password)
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmqurl, credentials=credentials))
+        self.connection = connection
         self.channel = self.connection.channel()
         self.delivery_tag = None
 
@@ -31,7 +30,6 @@ class RabbitMQClient(object):
     def _disconnect(self):
         self.channel.basic_ack(self.delivery_tag)
         self.channel.close()
-        self.connection.close()
 
 
 def multiple_sum(array):
@@ -46,11 +44,11 @@ def multiple_sum(array):
     return out
 
 
-def main(queuename, rabbitmqurl, username, password):
+def main(queuename, connection):
     outputfile = open("experiment3_{}_results.csv".format(datetime.date.today()), "a")
 
     progress = []
-    rabbitMq = RabbitMQClient(rabbitmqurl, username, password, queuename)
+    rabbitMq = RabbitMQClient(connection, queuename)
 
     start = str(datetime.datetime.now())
     tic = time.time()
@@ -92,4 +90,7 @@ def main(queuename, rabbitmqurl, username, password):
     outputfile.close()
 
 
-if __name__ == "__main__": main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+if __name__ == "__main__":
+    credentials = pika.PlainCredentials(sys.argv[3], sys.argv[4])
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=sys.argv[2], credentials=credentials))
+    main(sys.argv[1], connection)
