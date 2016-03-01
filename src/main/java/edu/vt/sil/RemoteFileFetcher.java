@@ -75,8 +75,8 @@ public class RemoteFileFetcher {
         String suffix = args.length == 5 ? args[4] : ".csv";
 
         int successfulHosts = fetchFiles(hosts, keys, prefix, tempDir, suffix);
-        if (successfulHosts != hosts.length)
-            Files.move(tempDir, todayResultsDir.resolve(String.valueOf(successfulHosts)), StandardCopyOption.REPLACE_EXISTING);
+
+        Files.move(tempDir, todayResultsDir.resolve(String.valueOf(successfulHosts)), StandardCopyOption.REPLACE_EXISTING);
     }
 
     private static int fetchFiles(String[] hosts, KeyProvider keys, String prefix, Path resultsDir, String suffix) {
