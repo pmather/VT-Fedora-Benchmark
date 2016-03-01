@@ -5,13 +5,12 @@ import edu.vt.sil.entities.ExperimentResult;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * Author: dedocibula
  * Created on: 9.2.2016.
  */
-public class OverlapProcessor implements Processor {
+public final class OverlapProcessor implements ResultProcessor {
     @Override
     public String getDescription() {
         return "Event types overlap (sec)";

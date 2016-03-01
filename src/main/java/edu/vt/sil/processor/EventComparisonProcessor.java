@@ -13,7 +13,7 @@ import java.util.stream.IntStream;
  * Author: dedocibula
  * Created on: 9.2.2016.
  */
-public class EventComparisonProcessor implements Processor {
+public final class EventComparisonProcessor implements ResultProcessor {
     @Override
     public String getDescription() {
         return "Event Types Duration (sec)";

@@ -3,7 +3,6 @@ package edu.vt.sil.processor;
 import edu.vt.sil.entities.ExperimentResult;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -11,7 +10,7 @@ import java.util.Map;
  * Author: dedocibula
  * Created on: 9.2.2016.
  */
-public class SimpleDurationProcessor implements Processor {
+public final class SimpleDurationProcessor implements ResultProcessor {
     @Override
     public String getDescription() {
         return "Experiment Duration (sec)";
