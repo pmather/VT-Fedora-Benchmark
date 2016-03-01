@@ -2,21 +2,27 @@ package edu.vt.sil.messaging;
 
 import com.rabbitmq.client.*;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Author: dedocibula
  * Created on: 16.2.2016.
  */
-public class RabbitMQProducer implements AutoCloseable {
-    private final static String TOPIC_NAME = "control_topic";
-    private final static String QUEUE_NAME = "work_queue";
+public final class RabbitMQProducer implements AutoCloseable {
+    private static final String WAIT_QUEUE_NAME = "wait_queue";
+    private static final String WAIT_QUEUE_CALLBACK = "wait_queue_callback";
+    private static final String CONTROL_TOPIC_NAME = "control_topic";
+    private static final String CONTROL_TOPIC_CALLBACK = "control_topic_callback";
+    private static final String WORK_QUEUE_NAME = "work_queue";
+
+    private static final String ARGUMENTS_JOINER = "|,|";
 
     private Connection connection;
     private Channel channel;
+    private QueueingConsumer waitQueueConsumer;
+    private QueueingConsumer controlTopicConsumer;
 
     public RabbitMQProducer(String host, String userName, String password) throws Exception {
         ConnectionFactory factory = new ConnectionFactory();
@@ -27,27 +33,70 @@ public class RabbitMQProducer implements AutoCloseable {
         connection = factory.newConnection();
         channel = connection.createChannel();
 
-        channel.exchangeDeclare(TOPIC_NAME, "fanout");
-        channel.queueDeclare(QUEUE_NAME, true, false, false, null);
+        channel.queueDeclare(WAIT_QUEUE_NAME, true, false, false, null);
+        channel.queueDeclare(WAIT_QUEUE_CALLBACK, false, true, true, null);
+        waitQueueConsumer = new QueueingConsumer(channel);
+        channel.basicConsume(WAIT_QUEUE_CALLBACK, true, waitQueueConsumer);
+
+        channel.exchangeDeclare(CONTROL_TOPIC_NAME, "fanout");
+        channel.queueDeclare(CONTROL_TOPIC_CALLBACK, false, true, true, null);
+        controlTopicConsumer = new QueueingConsumer(channel);
+        channel.basicConsume(CONTROL_TOPIC_CALLBACK, true, controlTopicConsumer);
+
+        channel.queueDeclare(WORK_QUEUE_NAME, true, false, false, null);
     }
 
-    public void sendControlMessage(RabbitMQCommand commandType, String remoteCommand) {
-        try {
-            AMQP.BasicProperties properties = MessageProperties.TEXT_PLAIN;
-            Map<String, Object> headers = new HashMap<>();
-            headers.put("command", commandType.name());
-            channel.basicPublish(TOPIC_NAME, "", properties.builder().headers(headers).build(), remoteCommand.getBytes(StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public String addWorker() throws Exception {
+        AMQP.BasicProperties properties = MessageProperties.TEXT_PLAIN
+                .builder()
+                .correlationId(UUID.randomUUID().toString())
+                .replyTo(WAIT_QUEUE_CALLBACK)
+                .build();
+        channel.basicPublish("", WAIT_QUEUE_NAME, properties, "addWorker".getBytes(StandardCharsets.UTF_8));
+
+        return waitForHostAcknowledgements(waitQueueConsumer, properties.getCorrelationId(), 1).get(0);
     }
 
-    public void sendWorkItem(String workItem) {
-        try {
-            channel.basicPublish("", QUEUE_NAME, MessageProperties.TEXT_PLAIN, workItem.getBytes(StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            e.printStackTrace();
+    public List<String> sendControlMessage(String command, String[] arguments, int waitAcknowledgements) throws Exception {
+        Objects.requireNonNull(command);
+        Objects.requireNonNull(arguments);
+
+        Map<String, Object> headers = new HashMap<>();
+        headers.put("command", command);
+
+        AMQP.BasicProperties properties = MessageProperties.TEXT_PLAIN
+                .builder()
+                .headers(headers)
+                .correlationId(UUID.randomUUID().toString())
+                .replyTo(CONTROL_TOPIC_CALLBACK)
+                .build();
+        byte[] payload = Arrays.stream(arguments).collect(Collectors.joining(ARGUMENTS_JOINER)).getBytes(StandardCharsets.UTF_8);
+        channel.basicPublish(CONTROL_TOPIC_NAME, "", properties, payload);
+
+        return waitForHostAcknowledgements(controlTopicConsumer, properties.getCorrelationId(), waitAcknowledgements);
+    }
+
+    public void sendWorkItem(String workItem) throws Exception {
+        Objects.requireNonNull(workItem);
+
+        channel.basicPublish("", WORK_QUEUE_NAME, MessageProperties.TEXT_PLAIN, workItem.getBytes(StandardCharsets.UTF_8));
+        channel.waitForConfirms();
+    }
+
+    public void purgeWorkItems() throws Exception {
+        channel.queuePurge(WORK_QUEUE_NAME);
+    }
+
+    private List<String> waitForHostAcknowledgements(QueueingConsumer consumer, String correlationId, int waitAcknowledgements) throws InterruptedException {
+        List<String> result = new ArrayList<>();
+
+        while (result.size() < waitAcknowledgements) {
+            QueueingConsumer.Delivery delivery = consumer.nextDelivery();
+            if (delivery.getProperties().getCorrelationId().equals(correlationId))
+                result.add(new String(delivery.getBody()));
         }
+
+        return result;
     }
 
     @Override

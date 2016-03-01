@@ -1,54 +1,58 @@
-package edu.vt.sil;
+package edu.vt.sil.components;
 
+import edu.vt.sil.administrator.Command;
 import edu.vt.sil.entities.Event;
 import edu.vt.sil.entities.ExperimentResult;
-import edu.vt.sil.processor.EventComparisonProcessor;
-import edu.vt.sil.processor.OverlapProcessor;
-import edu.vt.sil.processor.Processor;
-import edu.vt.sil.processor.SimpleDurationProcessor;
+import edu.vt.sil.processor.ResultProcessor;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Author: dedocibula
  * Created on: 9.2.2016.
  */
-public class ResultParser {
-    public static void main(String[] args) throws IOException {
-        if (args.length != 2) {
-            System.out.println("Please specify parameters: <results_directory> <results_descriptor>");
-            return;
-        }
+public final class ResultParser extends AbstractComponent {
+    private ResultProcessor[] processors;
 
-        String directory = args[0];
-        Path resultsDir = Paths.get(directory);
-        if (Files.notExists(resultsDir, LinkOption.NOFOLLOW_LINKS) || !Files.isDirectory(resultsDir)) {
-            System.out.println(String.format("No directory: %s", directory));
-            return;
-        }
+    private Path resultsDir;
+    private String resultDescriptor;
 
-        String descriptor = args[1];
-        if (descriptor == null || descriptor.isEmpty()) {
-            System.out.println("Cannot use null/empty descriptor");
-            return;
-        }
+    public ResultParser(ResultProcessor... processors) {
+        if (processors == null || processors.length == 0)
+            throw new IllegalArgumentException("No processors specified");
 
-        Map<String, List<ExperimentResult>> results = extractExperimentResults(resultsDir, descriptor);
-
-        Path output = Paths.get(directory, String.format("%s_processed.csv", descriptor));
-        processResults(output, results,
-                new SimpleDurationProcessor(),
-                new EventComparisonProcessor(),
-                new OverlapProcessor());
+        this.processors = processors;
     }
 
-    private static void processResults(Path output, Map<String, List<ExperimentResult>> results, Processor... processors) throws IOException {
-        if (processors == null)
-            return;
+    @Override
+    protected void prepare(Command command, String[] arguments) throws Exception {
+        if (arguments.length != 2)
+            throw new IllegalArgumentException(String.format("Invalid number of parameters. Expected: 2 - Received: %s",
+                    arguments.length));
 
-        for (Processor processor : processors) {
+        resultsDir = Paths.get(arguments[0]);
+        if (Files.notExists(resultsDir, LinkOption.NOFOLLOW_LINKS) || !Files.isDirectory(resultsDir)) {
+            System.out.println(String.format("No directory: %s", resultsDir));
+            return;
+        }
+
+        resultDescriptor = arguments[1];
+        if (resultDescriptor == null || resultDescriptor.isEmpty())
+            throw new IllegalArgumentException("Cannot use null/empty descriptor");
+    }
+
+    @Override
+    protected void execute() throws Exception {
+        Map<String, List<ExperimentResult>> results = extractExperimentResults(resultsDir, resultDescriptor);
+
+        Path output = resultsDir.resolve(String.format("%s_processed.csv", resultDescriptor));
+
+        for (ResultProcessor processor : processors) {
             String description = processor.getDescription();
             String headers = processor.getHeaders(results);
             List<String> content = processor.process(results);
@@ -59,6 +63,11 @@ public class ResultParser {
             content.add("");
             Files.write(output, content, StandardOpenOption.APPEND, StandardOpenOption.CREATE);
         }
+    }
+
+    @Override
+    public String showLabel() {
+        return "<results directory> <results descriptor>";
     }
 
     private static Map<String, List<ExperimentResult>> extractExperimentResults(Path resultsDir, String descriptor) throws IOException {
@@ -88,8 +97,7 @@ public class ResultParser {
                 Event event = new Event(smallParts[1], smallParts[0], Double.parseDouble(smallParts[2]), Double.parseDouble(smallParts[3]));
                 result.events.add(event);
             } catch (Exception e) {
-                System.out.println("Error occurred while reading file [ " + resultName + " ] line [ " + l + " ]");
-                throw e;
+                throw new RuntimeException("Error occurred while reading file [ " + resultName + " ] line [ " + l + " ]", e);
             }
         });
         return result;

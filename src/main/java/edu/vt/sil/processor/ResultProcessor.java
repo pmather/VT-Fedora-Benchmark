@@ -9,7 +9,7 @@ import java.util.Map;
  * Author: dedocibula
  * Created on: 9.2.2016.
  */
-public interface Processor {
+public interface ResultProcessor {
     String getDescription();
 
     String getHeaders(Map<String, List<ExperimentResult>> results);
