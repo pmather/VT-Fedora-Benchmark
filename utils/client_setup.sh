@@ -27,6 +27,7 @@ sudo pip install cython
 sudo apt-get install libhdf5-dev -y
 sudo pip install xmltodict
 sudo pip install h5py
+sudo pip install supervisor
 sudo apt-get install openjdk-8-jdk -y
 rm get-pip.py
 
