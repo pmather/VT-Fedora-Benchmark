@@ -94,7 +94,7 @@ def main(queuename, connection):
 
         # download h5 file
         download = time.time()
-        call("wget " + fedorah5url + " -O " + fileName, shell=True)
+        call("wget -nv " + fedorah5url + " -O " + fileName, shell=True)
         downloadelapsed = time.time() - download
         progress.append("Download," + fedoraobjurl + "," + str(download) + "," + str(download + downloadelapsed))
 

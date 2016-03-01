@@ -43,7 +43,7 @@ def downloadFromS3(filename):
 
 def downloadFromGDrive(gdrivedir, filename):
     url = "https://googledrive.com/host/{}/{}".format(gdrivedir, filename)
-    call("wget " + url + " -O " + filename, shell=True)
+    call("wget -nv " + url + " -O " + filename, shell=True)
 
 
 def createFedoraObject(rdfdata, fedoraurl, filename):
