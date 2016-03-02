@@ -25,7 +25,7 @@ public final class RemoteFileFetcher extends AbstractComponent {
     private KeyProvider keyProvider;
 
     private String[] hosts;
-    private Path remoteDir;
+    private String remoteDir;
     private Path localDir;
     private Path tempDir;
     private String prefix;
@@ -53,7 +53,9 @@ public final class RemoteFileFetcher extends AbstractComponent {
         if (Arrays.stream(hosts).anyMatch(h -> h == null || h.isEmpty()))
             throw new IllegalArgumentException("Cannot use null/empty host");
 
-        remoteDir = Paths.get(arguments[1]);
+        // validation
+        Paths.get(arguments[1]);
+        remoteDir = arguments[1].endsWith("/") || arguments[1].endsWith("\\") ? arguments[1] : arguments[1] + "/";
 
         localDir = Paths.get(arguments[2]);
         if (Files.notExists(localDir) || !Files.isDirectory(localDir))
@@ -89,14 +91,14 @@ public final class RemoteFileFetcher extends AbstractComponent {
                 try (Session session = client.startSession()) {
                     final Session.Command cmd = session.exec(String.format("ls %s", remoteDir));
                     files = IOUtils.readFully(cmd.getInputStream()).toString().split("\n");
-                    System.out.println(String.format("Found: %s", Arrays.toString(files)));
+                    System.out.println(String.format("Host: %s, found: %s", host, Arrays.toString(files)));
                     cmd.join(5, TimeUnit.SECONDS);
                 }
 
                 boolean resultsFound = false;
                 for (String file : files) {
                     if (file.startsWith(prefix) && Arrays.stream(suffixes).anyMatch(file::endsWith)) {
-                        client.newSCPFileTransfer().download(remoteDir.resolve(file).toString(), tempDir.resolve(host + "-" + file).toString());
+                        client.newSCPFileTransfer().download(remoteDir + file, tempDir.resolve(host + "-" + file).toString());
                         System.out.println(String.format("%s downloaded", file));
                         resultsFound = true;
                     }
