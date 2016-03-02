@@ -76,7 +76,7 @@ public final class InteractiveAdministrator {
     }
 
     private static void handleInput(String line, CommandHandler handler) throws Exception {
-        String[] parts = line.trim().split(" ");
+        String[] parts = Arrays.stream(line.trim().split("[ ]+(?=([^\"]*\"[^\"]*\")*[^\"]*$)")).map(p -> p.replace("\"", "")).toArray(String[]::new);
         if (parts.length < 1) {
             System.out.println("Too few arguments\n");
             return;

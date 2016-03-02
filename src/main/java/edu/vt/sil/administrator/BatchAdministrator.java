@@ -58,7 +58,7 @@ public final class BatchAdministrator {
     }
 
     private static RabbitMQProducer createProducer(Properties properties) throws Exception {
-        String rabbitMQHost = properties.getProperty("rabbitmq-host-url");
+        String rabbitMQHost = properties.getProperty("rabbitmq-host");
         if (rabbitMQHost == null || rabbitMQHost.isEmpty()) {
             System.out.println("Cannot use null/empty RabbitMQ host");
             System.exit(-1);
