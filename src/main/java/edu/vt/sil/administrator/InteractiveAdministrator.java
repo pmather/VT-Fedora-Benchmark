@@ -1,18 +1,9 @@
 package edu.vt.sil.administrator;
 
-import edu.vt.sil.components.Component;
-import edu.vt.sil.components.ExperimentOrchestrator;
-import edu.vt.sil.components.RemoteFileFetcher;
-import edu.vt.sil.components.ResultParser;
 import edu.vt.sil.messaging.RabbitMQProducer;
-import edu.vt.sil.processor.EventComparisonProcessor;
-import edu.vt.sil.processor.OverlapProcessor;
-import edu.vt.sil.processor.SimpleDurationProcessor;
 
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Scanner;
-import java.util.TreeMap;
 
 /**
  * Author: dedocibula
@@ -57,20 +48,19 @@ public final class InteractiveAdministrator {
         }
 
         try (RabbitMQProducer producer = new RabbitMQProducer(host, userName, password)) {
-            Map<AdministratorCommand, Component> mappings = createMappings(producer, remoteUserName, privateKeyName);
+            CommandHandler handler = new CommandHandler(producer, remoteUserName, privateKeyName);
 
             try (Scanner scanner = new Scanner(System.in)) {
                 String line;
-                printHeader(mappings);
+                printHeader(handler);
                 while (!(line = scanner.nextLine()).isEmpty()) {
                     try {
-                        handleInput(line, mappings);
+                        handleInput(line, handler);
                     } catch (Exception e) {
                         System.out.println(e.toString() + "\n");
                     }
-                    printHeader(mappings);
+                    printHeader(handler);
                 }
-
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -78,33 +68,14 @@ public final class InteractiveAdministrator {
         }
     }
 
-    private static Map<AdministratorCommand, Component> createMappings(RabbitMQProducer producer, String remoteUserName, String privateKeyName) throws Exception {
-        Map<AdministratorCommand, Component> mappings = new TreeMap<>();
-
-        ExperimentOrchestrator orchestrator = new ExperimentOrchestrator(producer);
-        mappings.put(AdministratorCommand.START_WORKERS, orchestrator);
-        mappings.put(AdministratorCommand.RUN_EXPERIMENT1, orchestrator);
-        mappings.put(AdministratorCommand.RUN_EXPERIMENT2, orchestrator);
-        mappings.put(AdministratorCommand.RUN_EXPERIMENT3, orchestrator);
-        mappings.put(AdministratorCommand.STOP_WORKERS, orchestrator);
-
-        mappings.put(AdministratorCommand.FETCH_RESULTS, new RemoteFileFetcher(remoteUserName, privateKeyName));
-        mappings.put(AdministratorCommand.PROCESS_RESULTS, new ResultParser(new SimpleDurationProcessor(),
-                new EventComparisonProcessor(),
-                new OverlapProcessor()));
-
-        return mappings;
-    }
-
-    private static void printHeader(Map<AdministratorCommand, Component> mappings) {
+    private static void printHeader(CommandHandler handler) {
         System.out.println("------------------------------------------------------------");
         System.out.println("Please enter your command (Empty command or CTRL+C to exit):");
-        for (AdministratorCommand command : mappings.keySet())
-            System.out.println(String.format("\t%s %s", command, mappings.get(command).showLabel(command)));
+        handler.printCommandLabels();
         System.out.println("------------------------------------------------------------");
     }
 
-    private static void handleInput(String line, Map<AdministratorCommand, Component> mappings) throws Exception {
+    private static void handleInput(String line, CommandHandler handler) throws Exception {
         String[] parts = line.trim().split(" ");
         if (parts.length < 1) {
             System.out.println("Too few arguments\n");
@@ -120,7 +91,6 @@ public final class InteractiveAdministrator {
         }
         String[] arguments = Arrays.copyOfRange(parts, 1, parts.length);
 
-        mappings.get(command).handleCommand(command, arguments);
-        System.out.println(String.format("Command %s handled successfully\n", command));
+        handler.handleCommand(command, arguments);
     }
 }
