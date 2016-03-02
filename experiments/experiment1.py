@@ -1,6 +1,4 @@
 import datetime
-import boto3
-import pika
 import h5py
 import pycurl
 import sys, os
@@ -12,47 +10,14 @@ from subprocess import call
 from StringIO import StringIO
 
 
-class RabbitMQClient(object):
-    def __init__(self, connection, queuename):
-        super(RabbitMQClient, self).__init__()
-        self.queuename = queuename
-        self.connection = connection
-        self.channel = self.connection.channel()
-        self.delivery_tag = None
-
-    def downloadWorkItem(self):
-        if self.delivery_tag:
-            self.channel.basic_ack(self.delivery_tag)
-        while True:
-            method_frame, header_frame, body = self.channel.basic_get(self.queuename)
-            if method_frame:
-                self.delivery_tag = method_frame.delivery_tag
-                if not body:
-                    self._disconnect()
-                return body
-
-    def _disconnect(self):
-        self.channel.basic_ack(self.delivery_tag)
-        self.channel.close()
-
-
-def downloadFromS3(filename):
-    s3 = boto3.client('s3')
-    s3.download_file('sebdata', filename, filename)
-
-
-def downloadFromGDrive(gdrivedir, filename):
-    url = "https://googledrive.com/host/{}/{}".format(gdrivedir, filename)
-    call("wget -nv " + url + " -O " + filename, shell=True)
-
-
-def createFedoraObject(rdfdata, fedoraurl, filename):
+# create fedora object
+def create_fedora_object(rdf_data, fedora_url, filename):
     storage = StringIO()
     c = pycurl.Curl()
-    c.setopt(c.URL, "{}/{}".format(fedoraurl, filename[:-3]))
+    c.setopt(c.URL, "{}/{}".format(fedora_url, filename[:-3]))
     c.setopt(pycurl.CUSTOMREQUEST, "PUT")
     c.setopt(pycurl.HTTPHEADER, ["Content-type: text/turtle"])
-    c.setopt(c.POSTFIELDS, rdfdata)
+    c.setopt(c.POSTFIELDS, rdf_data)
     c.setopt(c.WRITEFUNCTION, storage.write)
     c.perform()
     c.close()
@@ -62,12 +27,12 @@ def createFedoraObject(rdfdata, fedoraurl, filename):
 
 
 # create fedora binary
-def createFedoraBinary(filepath, fedoraurl):
+def create_fedora_binary(file_path, fedora_url):
     storage = StringIO()
-    f = open(filepath, "rb")
-    fs = os.path.getsize(filepath)
+    f = open(file_path, "rb")
+    fs = os.path.getsize(file_path)
     c = pycurl.Curl()
-    c.setopt(c.URL, fedoraurl)
+    c.setopt(c.URL, fedora_url)
     c.setopt(c.PUT, 1)
     c.setopt(c.READDATA, f)
     c.setopt(c.INFILESIZE, int(fs))
@@ -80,91 +45,92 @@ def createFedoraBinary(filepath, fedoraurl):
     return content
 
 
-def main(fedoraurl, gdriveDir, queuename, connection):
-    outputfile = open("experiment1_{}_results.csv".format(datetime.date.today()), "a")
-    urlfile = open("fedoraurls.txt", "a")
+def run(fedora_url, remote_file_downloader, work_item_client):
+    output_file = open("experiment1_{}_results.csv".format(datetime.date.today()), "a")
+    url_file = open("fedoraurls.txt", "a")
 
     progress = []
-    rabbitMq = RabbitMQClient(connection, queuename)
 
     start = str(datetime.datetime.now())
     tic = time.time()
 
-    while True:
-        line = rabbitMq.downloadWorkItem()
-        if not line:
-            break
-        fileName = line.strip()
+    # obtain work items from work_item_client (see commons.py for implementations)
+    for work_item in work_item_client.get_work_item():
+        file_name = work_item.strip()
 
-        # downloadFromS3(fileName)
+        # download remote file from remote storage (see commons.py for implementations)
         download = time.time()
-        downloadFromGDrive(gdriveDir, fileName)
-        progress.append("Download," + fileName + "," + str(download) + "," + str(time.time()))
+        remote_file_downloader.download_from_storage(file_name)
+        progress.append("Download," + file_name + "," + str(download) + "," + str(time.time()))
 
         # read hdf5 file
-        f = h5py.File(fileName, 'r')
+        f = h5py.File(file_name, 'r')
 
         processing = time.time()
         if f.keys()[0] is not None:
-            datasets = f[f.keys()[0]]
+            data_sets = f[f.keys()[0]]
             channel_str = ""
             c = 0
-            for channel in datasets.keys():
-                if c == len(datasets.keys()) - 1:
+            for channel in data_sets.keys():
+                if c == len(data_sets.keys()) - 1:
                     channel_str = channel_str + '<> dc:coverage "' + channel + '" '
                 else:
                     channel_str = channel_str + '<> dc:coverage "' + channel + '" . '
                 c += 1
 
             # run fits program
-            call("fits-0.9.0/fits.sh -i " + fileName + " > " + fileName + "_fits.xml", shell=True)
+            call("fits-0.9.0/fits.sh -i " + file_name + " > " + file_name + "_fits.xml", shell=True)
 
             # read fits xml
-            fitsxml = open(fileName + "_fits.xml", 'r').read()
-            result = xmltodict.parse(fitsxml)
+            fits_xml = open(file_name + "_fits.xml", 'r').read()
+            result = xmltodict.parse(fits_xml)
             description = result['fits']['identification']['identity'][0]['@format']
             format = result['fits']['identification']['identity'][0]['@mimetype']
 
             fits_str = '<> dc:description "' + description + '" . ' + '<> dc:format "' + format + '" . '
 
-            # Create Fedora object
-            rdfdata = 'PREFIX dc: <http://purl.org/dc/elements/1.1/> <> dc:title "' + fileName + '" . ' + \
-                      fits_str + channel_str
-            progress.append("Processing," + fileName + "," + str(processing) + "," + str(time.time()))
+            # create Fedora object
+            rdf_data = 'PREFIX dc: <http://purl.org/dc/elements/1.1/> <> dc:title "' + file_name + '" . ' + \
+                       fits_str + channel_str
+            progress.append("Processing," + file_name + "," + str(processing) + "," + str(time.time()))
 
             ingestion = time.time()
-            objecturl = ""
+            object_url = ""
             for x in xrange(0, 5):
                 try:
-                    objecturl = createFedoraObject(rdfdata, fedoraurl, fileName)
+                    object_url = create_fedora_object(rdf_data, fedora_url, file_name)
                     break
                 except SocketError as e:
                     if x == 4:
                         raise SocketError("retry 5 times still failed in fedora" + str(e.errno))
                     pass
 
-            # Create Fedora binary
-            if len(objecturl) > 0:
-                fileurl = objecturl + "/h5"
-                createFedoraBinary(fileName, fileurl)
-                progress.append("Ingestion," + fileName + "," + str(ingestion) + "," + str(time.time()))
-                urlfile.write(objecturl + "\n")
-                print fileurl
+            # create Fedora binary
+            if len(object_url) > 0:
+                file_url = object_url + "/h5"
+                create_fedora_binary(file_name, file_url)
+                progress.append("Ingestion," + file_name + "," + str(ingestion) + "," + str(time.time()))
+                url_file.write(object_url + "\n")
+                print file_url
 
-        os.remove(fileName)
-        os.remove(fileName + "_fits.xml")
+        os.remove(file_name)
+        os.remove(file_name + "_fits.xml")
 
     duration = str(time.time() - tic)
     end = str(datetime.datetime.now())
     print duration
     progress.insert(0, "OVERALL EXECUTION," + start + "," + duration + "," + end)
     for line in progress:
-        outputfile.write(line + "\n")
-    outputfile.close()
-    urlfile.close()
+        output_file.write(line + "\n")
+    output_file.close()
+    url_file.close()
 
 
 if __name__ == "__main__":
-    credentials = pika.PlainCredentials(sys.argv[5], sys.argv[6])
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=sys.argv[4], credentials=credentials))
-    main(sys.argv[1], sys.argv[2], sys.argv[3], connection)
+    fedoraurl = sys.argv[1]
+    google_drive_dir = sys.argv[2]
+    data_set_filename = sys.argv[3]
+
+    from commons import GoogleDriveDownloader, FileSystemClient
+
+    run(fedoraurl, GoogleDriveDownloader(google_drive_dir), FileSystemClient(data_set_filename))
