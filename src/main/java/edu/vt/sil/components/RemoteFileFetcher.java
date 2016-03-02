@@ -29,7 +29,7 @@ public final class RemoteFileFetcher extends AbstractComponent {
     private Path localDir;
     private Path tempDir;
     private String prefix;
-    private String suffix;
+    private String[] suffixes;
 
     public RemoteFileFetcher(String userName, String keyName) throws IOException {
         Objects.requireNonNull(userName);
@@ -65,7 +65,12 @@ public final class RemoteFileFetcher extends AbstractComponent {
         if (prefix == null || prefix.isEmpty())
             throw new IllegalArgumentException("Cannot use null/empty prefix");
 
-        suffix = arguments.length == 5 ? arguments[4] : ".csv";
+        if (arguments.length == 5) {
+            String[] parts = arguments[4].split(",");
+            suffixes = Arrays.stream(parts).filter(s -> s != null && !s.isEmpty()).toArray(String[]::new);
+        } else {
+            suffixes = new String[]{".csv", ".out"};
+        }
     }
 
     @Override
@@ -88,7 +93,7 @@ public final class RemoteFileFetcher extends AbstractComponent {
 
                 boolean resultsFound = false;
                 for (String file : files) {
-                    if (file.startsWith(prefix) && file.endsWith(suffix)) {
+                    if (file.startsWith(prefix) && Arrays.stream(suffixes).anyMatch(file::endsWith)) {
                         client.newSCPFileTransfer().download(remoteDir.resolve(file).toString(), tempDir.resolve(host + "-" + file).toString());
                         System.out.println(String.format("%s downloaded", file));
                         resultsFound = true;
@@ -97,8 +102,7 @@ public final class RemoteFileFetcher extends AbstractComponent {
 
                 if (resultsFound) successfulHosts++;
             } catch (IOException e) {
-                e.printStackTrace();
-                System.out.println("Error occurred for host [ " + host + " ]");
+                System.out.println(String.format("Error occurred for host %s: %s", host, e));
             }
         }
 
@@ -107,6 +111,6 @@ public final class RemoteFileFetcher extends AbstractComponent {
 
     @Override
     public String showLabel(AdministratorCommand command) {
-        return "<comma-separated remote ips> <remote directory> <local destination> <files prefix> [<files extension>]";
+        return "<comma-separated remote ips> <remote directory> <local destination> <files prefix> [<comma-separated files extensions>]";
     }
 }

@@ -7,7 +7,6 @@ import edu.vt.sil.processor.ResultProcessor;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -40,7 +39,7 @@ public final class ResultParser extends AbstractComponent {
                     arguments.length));
 
         resultsDir = Paths.get(arguments[0]);
-        if (Files.notExists(resultsDir, LinkOption.NOFOLLOW_LINKS) || !Files.isDirectory(resultsDir))
+        if (Files.notExists(resultsDir) || !Files.isDirectory(resultsDir))
             throw new IllegalArgumentException(String.format("No directory: %s", resultsDir));
 
         resultDescriptor = arguments[1];
