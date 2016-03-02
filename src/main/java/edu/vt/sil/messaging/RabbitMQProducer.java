@@ -67,7 +67,7 @@ public final class RabbitMQProducer implements AutoCloseable {
                 .correlationId(UUID.randomUUID().toString())
                 .replyTo(WAIT_QUEUE_CALLBACK)
                 .build();
-        channel.basicPublish("", WAIT_QUEUE_NAME, properties, "ADD_WORKER".getBytes(StandardCharsets.UTF_8));
+        channel.basicPublish("", WAIT_QUEUE_NAME, properties, RabbitMQCommand.ADD_WORKER.name().getBytes(StandardCharsets.UTF_8));
 
         return waitForHostAcknowledgements(waitQueueConsumer, properties.getCorrelationId(), 1).get(0);
     }
