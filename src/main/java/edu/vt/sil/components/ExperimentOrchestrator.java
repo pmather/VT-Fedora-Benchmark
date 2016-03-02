@@ -55,9 +55,11 @@ public final class ExperimentOrchestrator extends AbstractComponent {
                             "Expected: 1 - Received: %s", arguments.length));
 
                 workerCount = Integer.parseInt(arguments[0]);
+                if (workerCount < 1)
+                    throw new IllegalArgumentException("Worker count cannot be less than 1");
                 break;
             case RUN_EXPERIMENT1:
-                if (!activeWorkers.isEmpty())
+                if (activeWorkers.isEmpty())
                     throw new IllegalArgumentException("There are no active workers. Start workers first");
                 if (arguments.length != 3)
                     throw new IllegalArgumentException(String.format("Invalid number of parameters. " +
@@ -75,7 +77,7 @@ public final class ExperimentOrchestrator extends AbstractComponent {
                 break;
             case RUN_EXPERIMENT2:
             case RUN_EXPERIMENT3:
-                if (!activeWorkers.isEmpty())
+                if (activeWorkers.isEmpty())
                     throw new IllegalArgumentException("There are no active workers. Start workers first");
                 if (arguments.length != 2)
                     throw new IllegalArgumentException(String.format("Invalid number of parameters. " +
@@ -105,7 +107,7 @@ public final class ExperimentOrchestrator extends AbstractComponent {
                 break;
             case RUN_EXPERIMENT1:
                 Map<String, Object> headers = new HashMap<>();
-                headers.put("fedoraUrl", fedoraUrl);
+                headers.put("fedoraUrl", fedoraUrl.toString());
                 headers.put("storageFolder", storageFolder);
                 executeExperiment(RabbitMQCommand.EXPERIMENT1, headers);
                 break;

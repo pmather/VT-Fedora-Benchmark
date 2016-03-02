@@ -10,9 +10,9 @@ import edu.vt.sil.processor.OverlapProcessor;
 import edu.vt.sil.processor.SimpleDurationProcessor;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.TreeMap;
 
 /**
  * Author: dedocibula
@@ -60,15 +60,17 @@ public final class InteractiveAdministrator {
             Map<AdministratorCommand, Component> mappings = createMappings(producer, remoteUserName, privateKeyName);
 
             try (Scanner scanner = new Scanner(System.in)) {
-                try {
-                    String line;
-                    while (!(line = scanner.nextLine()).isEmpty()) {
-                        printHeader(mappings);
+                String line;
+                printHeader(mappings);
+                while (!(line = scanner.nextLine()).isEmpty()) {
+                    try {
                         handleInput(line, mappings);
+                    } catch (Exception e) {
+                        System.out.println(e.toString() + "\n");
                     }
-                } catch (Exception e) {
-                    System.out.println(e.getMessage());
+                    printHeader(mappings);
                 }
+
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -77,7 +79,7 @@ public final class InteractiveAdministrator {
     }
 
     private static Map<AdministratorCommand, Component> createMappings(RabbitMQProducer producer, String remoteUserName, String privateKeyName) throws Exception {
-        Map<AdministratorCommand, Component> mappings = new HashMap<>();
+        Map<AdministratorCommand, Component> mappings = new TreeMap<>();
 
         ExperimentOrchestrator orchestrator = new ExperimentOrchestrator(producer);
         mappings.put(AdministratorCommand.START_WORKERS, orchestrator);
@@ -105,7 +107,7 @@ public final class InteractiveAdministrator {
     private static void handleInput(String line, Map<AdministratorCommand, Component> mappings) throws Exception {
         String[] parts = line.trim().split(" ");
         if (parts.length < 1) {
-            System.out.println("Too few arguments");
+            System.out.println("Too few arguments\n");
             return;
         }
 
@@ -113,7 +115,7 @@ public final class InteractiveAdministrator {
         try {
             command = AdministratorCommand.valueOf(parts[0].toUpperCase());
         } catch (IllegalArgumentException e) {
-            System.out.println(String.format("Unrecognized command: %s", parts[0]));
+            System.out.println(String.format("Unrecognized command: %s\n", parts[0]));
             return;
         }
         String[] arguments = Arrays.copyOfRange(parts, 1, parts.length);
