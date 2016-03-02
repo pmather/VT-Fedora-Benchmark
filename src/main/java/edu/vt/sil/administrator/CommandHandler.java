@@ -40,7 +40,7 @@ public final class CommandHandler {
             System.out.println(String.format("\t%s %s", command, mappings.get(command).showLabel(command)));
     }
 
-    public void handleCommand(AdministratorCommand command, String[] arguments) throws Exception {
+    public void handleCommand(AdministratorCommand command, String... arguments) throws Exception {
         if (!mappings.containsKey(command))
             throw new IllegalArgumentException(String.format("Unrecognized command: %s", command));
 
