@@ -1,12 +1,16 @@
 package edu.vt.sil.components;
 
-import edu.vt.sil.administrator.Command;
+import edu.vt.sil.administrator.AdministratorCommand;
 import edu.vt.sil.entities.Event;
 import edu.vt.sil.entities.ExperimentResult;
 import edu.vt.sil.processor.ResultProcessor;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,16 +34,14 @@ public final class ResultParser extends AbstractComponent {
     }
 
     @Override
-    protected void prepare(Command command, String[] arguments) throws Exception {
+    protected void prepare(AdministratorCommand command, String[] arguments) throws Exception {
         if (arguments.length != 2)
             throw new IllegalArgumentException(String.format("Invalid number of parameters. Expected: 2 - Received: %s",
                     arguments.length));
 
         resultsDir = Paths.get(arguments[0]);
-        if (Files.notExists(resultsDir, LinkOption.NOFOLLOW_LINKS) || !Files.isDirectory(resultsDir)) {
-            System.out.println(String.format("No directory: %s", resultsDir));
-            return;
-        }
+        if (Files.notExists(resultsDir, LinkOption.NOFOLLOW_LINKS) || !Files.isDirectory(resultsDir))
+            throw new IllegalArgumentException(String.format("No directory: %s", resultsDir));
 
         resultDescriptor = arguments[1];
         if (resultDescriptor == null || resultDescriptor.isEmpty())
@@ -66,7 +68,7 @@ public final class ResultParser extends AbstractComponent {
     }
 
     @Override
-    public String showLabel() {
+    public String showLabel(AdministratorCommand command) {
         return "<results directory> <results descriptor>";
     }
 

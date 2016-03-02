@@ -1,10 +1,20 @@
 package edu.vt.sil.messaging;
 
-import com.rabbitmq.client.*;
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.MessageProperties;
+import com.rabbitmq.client.QueueingConsumer;
 
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Author: dedocibula
@@ -17,12 +27,11 @@ public final class RabbitMQProducer implements AutoCloseable {
     private static final String CONTROL_TOPIC_CALLBACK = "control_topic_callback";
     private static final String WORK_QUEUE_NAME = "work_queue";
 
-    private static final String ARGUMENTS_JOINER = "|,|";
-
     private Connection connection;
     private Channel channel;
     private QueueingConsumer waitQueueConsumer;
     private QueueingConsumer controlTopicConsumer;
+    private Map<String, Object> connectionHeaders;
 
     public RabbitMQProducer(String host, String userName, String password) throws Exception {
         ConnectionFactory factory = new ConnectionFactory();
@@ -44,39 +53,45 @@ public final class RabbitMQProducer implements AutoCloseable {
         channel.basicConsume(CONTROL_TOPIC_CALLBACK, true, controlTopicConsumer);
 
         channel.queueDeclare(WORK_QUEUE_NAME, true, false, false, null);
+
+        Map<String, Object> headers = new HashMap<>();
+        headers.put("controlTopicName", CONTROL_TOPIC_NAME);
+        headers.put("workQueueName", WORK_QUEUE_NAME);
+        connectionHeaders = Collections.unmodifiableMap(headers);
     }
 
     public String addWorker() throws Exception {
         AMQP.BasicProperties properties = MessageProperties.TEXT_PLAIN
                 .builder()
+                .headers(connectionHeaders)
                 .correlationId(UUID.randomUUID().toString())
                 .replyTo(WAIT_QUEUE_CALLBACK)
                 .build();
-        channel.basicPublish("", WAIT_QUEUE_NAME, properties, "addWorker".getBytes(StandardCharsets.UTF_8));
+        channel.basicPublish("", WAIT_QUEUE_NAME, properties, "ADD_WORKER".getBytes(StandardCharsets.UTF_8));
 
         return waitForHostAcknowledgements(waitQueueConsumer, properties.getCorrelationId(), 1).get(0);
     }
 
-    public List<String> sendControlMessage(String command, String[] arguments, int waitAcknowledgements) throws Exception {
+    public List<String> sendControlMessage(RabbitMQCommand command, int waitAcknowledgements) throws Exception {
+        return this.sendControlMessage(command, waitAcknowledgements, null);
+    }
+
+    public List<String> sendControlMessage(RabbitMQCommand command, int waitAcknowledgements, Map<String, Object> arguments) throws Exception {
         Objects.requireNonNull(command);
         Objects.requireNonNull(arguments);
 
-        Map<String, Object> headers = new HashMap<>();
-        headers.put("command", command);
-
         AMQP.BasicProperties properties = MessageProperties.TEXT_PLAIN
                 .builder()
-                .headers(headers)
+                .headers(arguments)
                 .correlationId(UUID.randomUUID().toString())
                 .replyTo(CONTROL_TOPIC_CALLBACK)
                 .build();
-        byte[] payload = Arrays.stream(arguments).collect(Collectors.joining(ARGUMENTS_JOINER)).getBytes(StandardCharsets.UTF_8);
-        channel.basicPublish(CONTROL_TOPIC_NAME, "", properties, payload);
+        channel.basicPublish(CONTROL_TOPIC_NAME, "", properties, command.name().getBytes(StandardCharsets.UTF_8));
 
         return waitForHostAcknowledgements(controlTopicConsumer, properties.getCorrelationId(), waitAcknowledgements);
     }
 
-    public void sendWorkItem(String workItem) throws Exception {
+    public void scheduleWorkItem(String workItem) throws Exception {
         Objects.requireNonNull(workItem);
 
         channel.basicPublish("", WORK_QUEUE_NAME, MessageProperties.TEXT_PLAIN, workItem.getBytes(StandardCharsets.UTF_8));
