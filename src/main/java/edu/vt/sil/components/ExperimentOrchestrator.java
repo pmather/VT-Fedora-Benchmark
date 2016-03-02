@@ -143,8 +143,8 @@ public final class ExperimentOrchestrator extends AbstractComponent {
 
     private List<String> prepareHDF5WorkItems(String inputFileName, URL fedoraUrl) throws Exception {
         Path inputFile = Paths.get(inputFileName);
-        if (Files.notExists(inputFile) || !Files.isRegularFile(inputFile))
-            System.out.println(String.format("No input file: %s", inputFile));
+        if (Files.notExists(inputFile) || !Files.isRegularFile(inputFile) || !Files.isReadable(inputFile))
+            throw new IllegalArgumentException(String.format("No input file: %s", inputFile));
 
         List<String> lines = Files.readAllLines(inputFile);
         return fedoraUrl == null ? lines : lines.stream()

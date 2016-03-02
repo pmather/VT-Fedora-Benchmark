@@ -47,6 +47,8 @@ public final class RemoteFileFetcher extends AbstractComponent {
             throw new IllegalArgumentException(String.format("Invalid number of parameters. Expected: 4(5) - Received: %s",
                     arguments.length));
 
+        if (arguments[0] == null)
+            throw new IllegalArgumentException("Cannot use null hosts");
         hosts = arguments[0].split(",");
         if (Arrays.stream(hosts).anyMatch(h -> h == null || h.isEmpty()))
             throw new IllegalArgumentException("Cannot use null/empty host");
@@ -102,7 +104,7 @@ public final class RemoteFileFetcher extends AbstractComponent {
 
                 if (resultsFound) successfulHosts++;
             } catch (IOException e) {
-                System.out.println(String.format("Error occurred for host %s: %s", host, e));
+                throw new Exception(String.format("Error occurred for host %s: %s", host, e));
             }
         }
 
