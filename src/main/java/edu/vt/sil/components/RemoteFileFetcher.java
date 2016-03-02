@@ -1,6 +1,6 @@
 package edu.vt.sil.components;
 
-import edu.vt.sil.administrator.Command;
+import edu.vt.sil.administrator.AdministratorCommand;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.channel.direct.Session;
@@ -42,7 +42,7 @@ public final class RemoteFileFetcher extends AbstractComponent {
     }
 
     @Override
-    protected void prepare(Command command, String[] arguments) throws Exception {
+    protected void prepare(AdministratorCommand command, String[] arguments) throws Exception {
         if (arguments.length != 4 && arguments.length != 5)
             throw new IllegalArgumentException(String.format("Invalid number of parameters. Expected: 4(5) - Received: %s",
                     arguments.length));
@@ -106,7 +106,7 @@ public final class RemoteFileFetcher extends AbstractComponent {
     }
 
     @Override
-    public String showLabel() {
+    public String showLabel(AdministratorCommand command) {
         return "<comma-separated remote ips> <remote directory> <local destination> <files prefix> [<files extension>]";
     }
 }

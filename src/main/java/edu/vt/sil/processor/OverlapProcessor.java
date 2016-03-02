@@ -3,7 +3,10 @@ package edu.vt.sil.processor;
 import edu.vt.sil.entities.Event;
 import edu.vt.sil.entities.ExperimentResult;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
