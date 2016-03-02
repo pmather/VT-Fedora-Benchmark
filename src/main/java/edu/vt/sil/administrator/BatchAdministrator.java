@@ -3,7 +3,6 @@ package edu.vt.sil.administrator;
 import edu.vt.sil.messaging.RabbitMQCommand;
 import edu.vt.sil.messaging.RabbitMQProducer;
 
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.nio.file.Files;
@@ -25,7 +24,7 @@ public final class BatchAdministrator {
 
     public static void main(String[] args) throws Exception {
         Properties properties = new Properties();
-        try (InputStream in = new FileInputStream(PROPERTY_FILE)) {
+        try (InputStream in = BatchAdministrator.class.getResourceAsStream(PROPERTY_FILE)) {
             properties.load(in);
         }
 
