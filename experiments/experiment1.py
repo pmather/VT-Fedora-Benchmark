@@ -54,8 +54,11 @@ def run(fedora_url, remote_file_downloader, work_item_client):
     start = str(datetime.datetime.now())
     tic = time.time()
 
-    # obtain work items from work_item_client (see commons.py for implementations)
-    for work_item in work_item_client.get_work_item():
+    while True:
+        # obtain work item from work_item_client (see commons.py for implementations)
+        work_item = work_item_client.get_work_item()
+        if not work_item:
+            break
         file_name = work_item.strip()
 
         # download remote file from remote storage (see commons.py for implementations)

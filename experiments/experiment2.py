@@ -52,8 +52,11 @@ def run(work_item_client):
     tic = time.time()
 
     file_name = "temp.h5"
-    # obtain work items from work_item_client (see commons.py for implementations)
-    for work_item in work_item_client.get_work_item():
+    while True:
+        # obtain work item from work_item_client (see commons.py for implementations)
+        work_item = work_item_client.get_work_item()
+        if not work_item:
+            break
         fedora_obj_url = work_item.strip()
         fedora_h5_url = fedora_obj_url + "/h5"
 

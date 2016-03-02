@@ -1,4 +1,5 @@
-from urllib import urlretrieve
+from subprocess import call
+
 
 class RemoteFileDownloader(object):
     def __init__(self):
@@ -7,13 +8,14 @@ class RemoteFileDownloader(object):
     def download_from_storage(self, filename):
         raise NotImplementedError
 
+
 class GoogleDriveDownloader(RemoteFileDownloader):
     def __init__(self, google_drive_dir):
         super(GoogleDriveDownloader, self).__init__()
-        self.url = "https://googledrive.com/host/{}/".format(google_drive_dir)
+        self.url = "https://googledrive.com/host/" + google_drive_dir + "/{}"
 
     def download_from_storage(self, filename):
-        urlretrieve(self.url + filename, filename)
+        call("wget -nv " + self.url.format(filename) + " -O " + filename, shell=True)
 
 
 class WorkItemClient(object):
@@ -29,10 +31,11 @@ class FileSystemClient(WorkItemClient):
         super(FileSystemClient, self).__init__()
         with open(input_file) as f:
             self.lines = f.readlines()
+        self.current = 0
 
     def get_work_item(self):
-        for line in self.lines:
-            yield line
+        while self.current < len(self.lines):
+            return self.lines[self.current]
 
 
 class RabbitMQClient(WorkItemClient):

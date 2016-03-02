@@ -78,7 +78,8 @@ public final class RabbitMQProducer implements AutoCloseable {
 
     public List<String> sendControlMessage(RabbitMQCommand command, int waitAcknowledgements, Map<String, Object> arguments) throws Exception {
         Objects.requireNonNull(command);
-        Objects.requireNonNull(arguments);
+        if (waitAcknowledgements < 0)
+            throw new IllegalArgumentException("Wait Acknowledgements counter cannot be negative");
 
         AMQP.BasicProperties properties = MessageProperties.TEXT_PLAIN
                 .builder()
@@ -95,7 +96,6 @@ public final class RabbitMQProducer implements AutoCloseable {
         Objects.requireNonNull(workItem);
 
         channel.basicPublish("", WORK_QUEUE_NAME, MessageProperties.TEXT_PLAIN, workItem.getBytes(StandardCharsets.UTF_8));
-        channel.waitForConfirms();
     }
 
     public void purgeWorkItems() throws Exception {
