@@ -21,6 +21,8 @@ import java.util.concurrent.TimeUnit;
  * Created on: 10.2.2016.
  */
 public final class RemoteFileFetcher extends AbstractComponent {
+    private static final String[] DEFAULT_SUFFIXES = new String[]{".csv", ".out"};
+
     private String userName;
     private KeyProvider keyProvider;
 
@@ -73,7 +75,7 @@ public final class RemoteFileFetcher extends AbstractComponent {
             String[] parts = arguments[4].split(",");
             suffixes = Arrays.stream(parts).filter(s -> s != null && !s.isEmpty()).toArray(String[]::new);
         } else {
-            suffixes = new String[]{".csv", ".out"};
+            suffixes = DEFAULT_SUFFIXES;
         }
     }
 
@@ -95,16 +97,17 @@ public final class RemoteFileFetcher extends AbstractComponent {
                     cmd.join(5, TimeUnit.SECONDS);
                 }
 
-                boolean resultsFound = false;
-                for (String file : files) {
-                    if (file.startsWith(prefix) && Arrays.stream(suffixes).anyMatch(file::endsWith)) {
+                String[] filteredFiles = Arrays.stream(files)
+                        .filter(file -> file.startsWith(prefix) && Arrays.stream(suffixes).anyMatch(file::endsWith))
+                        .toArray(String[]::new);
+
+                if (!Arrays.equals(suffixes, DEFAULT_SUFFIXES) || Arrays.stream(filteredFiles).anyMatch(file -> file.endsWith(DEFAULT_SUFFIXES[0]))) {
+                    for (String file : filteredFiles) {
                         client.newSCPFileTransfer().download(remoteDir + file, tempDir.resolve(host + "-" + file).toString());
                         System.out.println(String.format("%s downloaded", file));
-                        resultsFound = true;
                     }
+                    successfulHosts++;
                 }
-
-                if (resultsFound) successfulHosts++;
             } catch (IOException e) {
                 throw new Exception(String.format("Error occurred for host %s: %s", host, e));
             }
