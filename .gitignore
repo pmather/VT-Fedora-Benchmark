@@ -37,3 +37,4 @@ gradle-app.setting
 .gradletasknamecache
 
 *.txt
+src/main/resources/experiments-setup.properties
