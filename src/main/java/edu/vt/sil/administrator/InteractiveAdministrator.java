@@ -47,7 +47,9 @@ public final class InteractiveAdministrator {
             System.exit(-1);
         }
 
+        System.out.println("Establishing connection to RabbitMQ host");
         try (RabbitMQProducer producer = new RabbitMQProducer(host, userName, password)) {
+            System.out.println("Connection established\n");
             CommandHandler handler = new CommandHandler(producer, remoteUserName, privateKeyName);
 
             try (Scanner scanner = new Scanner(System.in)) {
