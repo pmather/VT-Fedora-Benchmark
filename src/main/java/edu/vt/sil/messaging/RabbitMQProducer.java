@@ -22,9 +22,9 @@ import java.util.UUID;
  */
 public final class RabbitMQProducer implements AutoCloseable {
     private static final String WAIT_QUEUE_NAME = "wait_queue";
-    private static final String WAIT_QUEUE_CALLBACK = "wait_queue_callback";
+    private static final String WAIT_QUEUE_CALLBACK = "wait_queue_callback_" + UUID.randomUUID();
     private static final String CONTROL_TOPIC_NAME = "control_topic";
-    private static final String CONTROL_TOPIC_CALLBACK = "control_topic_callback";
+    private static final String CONTROL_TOPIC_CALLBACK = "control_topic_callback_" + UUID.randomUUID();
     private static final String WORK_QUEUE_NAME = "work_queue";
 
     private Connection connection;
