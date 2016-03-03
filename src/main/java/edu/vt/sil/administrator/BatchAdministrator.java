@@ -174,7 +174,7 @@ public final class BatchAdministrator {
 
     private static Map<String, String> extractRemoteResultsProperties(Properties properties) {
         Map<String, String> props = new HashMap<>();
-        props.put("directory", properties.getProperty("remote-results-directory", "/vt-sil/experiments"));
+        props.put("directory", properties.getProperty("remote-results-directory", "/vt-fedora-benchmark/experiments"));
         props.put("prefix", properties.getProperty("remote-results-prefix", "experiment"));
         props.put("suffixes", properties.getProperty("remote-results-suffixes", ".csv,.out"));
 
