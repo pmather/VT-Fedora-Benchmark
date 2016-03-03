@@ -4,7 +4,8 @@ import edu.vt.sil.messaging.RabbitMQCommand;
 import edu.vt.sil.messaging.RabbitMQProducer;
 
 import java.io.InputStream;
-import java.net.InetAddress;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,7 +29,11 @@ public final class BatchAdministrator {
             properties.load(in);
         }
 
+        System.out.println("Establishing connection to RabbitMQ host");
         try (RabbitMQProducer producer = createProducer(properties)) {
+            System.out.println("Connection established\n");
+
+            System.out.println("Extracting properties...");
             String fedoraUrl = extractFedoraUrl(properties);
             String dataset = extractDataSetInputFile(properties);
             String storageDirectory = extractExternalStorageDirectory(properties);
@@ -37,8 +42,14 @@ public final class BatchAdministrator {
             int workerCount = workerIps.split(",").length;
             Map<String, String> remoteProps = extractRemoteResultsProperties(properties);
             String localResultsDirectory = extractLocalResultsDirectory(properties);
+            System.out.println("Properties extracted\n");
 
-            for (int currentCount = 0; currentCount <= workerCount; currentCount++) {
+            System.out.println("======================================================");
+            System.out.println("STARTING BENCHMARK...");
+            System.out.println("======================================================");
+
+            for (int currentCount = 1; currentCount <= workerCount; currentCount++) {
+                System.out.println(String.format("Current worker count: %s\n", currentCount));
                 handler.handleCommand(AdministratorCommand.START_WORKERS, String.valueOf(currentCount));
                 handler.handleCommand(AdministratorCommand.RUN_EXPERIMENT1, fedoraUrl, storageDirectory, dataset);
                 handler.handleCommand(AdministratorCommand.RUN_EXPERIMENT2, fedoraUrl, dataset);
@@ -51,6 +62,10 @@ public final class BatchAdministrator {
             handler.handleCommand(AdministratorCommand.PROCESS_RESULTS, localResultsDirectory, RabbitMQCommand.EXPERIMENT1.name().toLowerCase());
             handler.handleCommand(AdministratorCommand.PROCESS_RESULTS, localResultsDirectory, RabbitMQCommand.EXPERIMENT2.name().toLowerCase());
             handler.handleCommand(AdministratorCommand.PROCESS_RESULTS, localResultsDirectory, RabbitMQCommand.EXPERIMENT3.name().toLowerCase());
+
+            System.out.println("======================================================");
+            System.out.println("FINISHING BENCHMARK...");
+            System.out.println("======================================================");
         } catch (Exception e) {
             System.out.println(e.toString());
             System.exit(-1);
@@ -86,11 +101,17 @@ public final class BatchAdministrator {
             System.exit(-1);
         }
 
-        if (InetAddress.getByName(fedoraUrl).isReachable(10 * 1000)) {
+        URL url = new URL(fedoraUrl);
+        HttpURLConnection huc = (HttpURLConnection) url.openConnection();
+        huc.setRequestMethod("HEAD");
+        int responseCode = huc.getResponseCode();
+
+        if (responseCode != 200) {
             System.out.println("Fedora is not reachable");
             System.exit(-1);
         }
 
+        System.out.println(String.format("Fedora url: %s", fedoraUrl));
         return fedoraUrl;
     }
 
@@ -107,6 +128,7 @@ public final class BatchAdministrator {
             System.exit(-1);
         }
 
+        System.out.println(String.format("Dataset input file: %s", dataset));
         return dataset;
     }
 
@@ -117,6 +139,7 @@ public final class BatchAdministrator {
             System.exit(-1);
         }
 
+        System.out.println(String.format("External storage directory: %s", storageDirectory));
         return storageDirectory;
     }
 
@@ -133,6 +156,8 @@ public final class BatchAdministrator {
             System.exit(-1);
         }
 
+        System.out.println(String.format("Remote username: %s", remoteUserName));
+        System.out.println(String.format("Private key: %s", privateKeyName));
         return new CommandHandler(producer, remoteUserName, privateKeyName);
     }
 
@@ -143,6 +168,7 @@ public final class BatchAdministrator {
         if (Arrays.stream(workersPublicIps.split(",")).anyMatch(h -> h == null || h.isEmpty()))
             throw new IllegalArgumentException("Cannot use null/empty worker ip");
 
+        System.out.println(String.format("Workers public IPs: %s", workersPublicIps));
         return workersPublicIps;
     }
 
@@ -152,6 +178,9 @@ public final class BatchAdministrator {
         props.put("prefix", properties.getProperty("remote-results-prefix", "experiment"));
         props.put("suffixes", properties.getProperty("remote-results-suffixes", ".csv,.out"));
 
+        System.out.println(String.format("Remote results directory: %s", props.get("directory")));
+        System.out.println(String.format("Remote results prefix: %s", props.get("prefix")));
+        System.out.println(String.format("Remote results suffixes: %s", props.get("suffixes")));
         return props;
     }
 
@@ -164,6 +193,7 @@ public final class BatchAdministrator {
         if (Files.notExists(currentDateDir))
             Files.createDirectory(currentDateDir);
 
+        System.out.println(String.format("Local results directory: %s", localDirectory));
         return currentDateDir.toString();
     }
 }
