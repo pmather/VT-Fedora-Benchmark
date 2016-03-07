@@ -38,3 +38,6 @@ curl -s https://api.github.com/repos/fcrepo4/fcrepo4/releases \
 sudo mv fedora.war /var/lib/tomcat7/webapps
 
 sudo service tomcat7 restart
+
+sudo apt-get install ntp
+sudo service ntp restart
