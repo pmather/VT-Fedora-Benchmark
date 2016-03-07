@@ -39,5 +39,5 @@ sudo mv fedora.war /var/lib/tomcat7/webapps
 
 sudo service tomcat7 restart
 
-sudo apt-get install ntp
+sudo apt-get install ntp -y
 sudo service ntp restart

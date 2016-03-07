@@ -46,5 +46,5 @@ fi
 echo export PATH="$PATH:${PWD}/fits-0.9.0/" >> ~/.bashrc
 source ~/.bashrc
 
-sudo apt-get install ntp
+sudo apt-get install ntp -y
 sudo service ntp restart
