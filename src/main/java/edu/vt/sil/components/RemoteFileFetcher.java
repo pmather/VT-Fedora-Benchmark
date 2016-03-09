@@ -27,7 +27,7 @@ public final class RemoteFileFetcher extends AbstractComponent {
     private KeyProvider keyProvider;
 
     private String[] hosts;
-    private String remoteDir;
+    private String remoteCommand;
     private Path localDir;
     private Path tempDir;
     private String prefix;
@@ -55,9 +55,9 @@ public final class RemoteFileFetcher extends AbstractComponent {
         if (Arrays.stream(hosts).anyMatch(h -> h == null || h.isEmpty()))
             throw new IllegalArgumentException("Cannot use null/empty host");
 
-        // validation
-        Paths.get(arguments[1]);
-        remoteDir = arguments[1].endsWith("/") || arguments[1].endsWith("\\") ? arguments[1] : arguments[1] + "/";
+        remoteCommand = arguments[1];
+        if (remoteCommand == null || remoteCommand.isEmpty())
+            throw new IllegalArgumentException("Cannot use null/empty remote command");
 
         localDir = Paths.get(arguments[2]);
         if (Files.notExists(localDir) || !Files.isDirectory(localDir))
@@ -91,19 +91,22 @@ public final class RemoteFileFetcher extends AbstractComponent {
                 String[] files;
                 client.authPublickey(userName, keyProvider);
                 try (Session session = client.startSession()) {
-                    final Session.Command cmd = session.exec(String.format("ls %s", remoteDir));
+                    final Session.Command cmd = session.exec(remoteCommand);
                     files = IOUtils.readFully(cmd.getInputStream()).toString().split("\n");
                     System.out.println(String.format("Host: %s, found: %s", host, Arrays.toString(files)));
                     cmd.join(5, TimeUnit.SECONDS);
                 }
 
                 String[] filteredFiles = Arrays.stream(files)
-                        .filter(file -> file.startsWith(prefix) && Arrays.stream(suffixes).anyMatch(file::endsWith))
+                        .filter(file -> {
+                            String fileName = Paths.get(file).getFileName().toString();
+                            return fileName.startsWith(prefix) && Arrays.stream(suffixes).anyMatch(fileName::endsWith);
+                        })
                         .toArray(String[]::new);
 
                 if (!Arrays.equals(suffixes, DEFAULT_SUFFIXES) || Arrays.stream(filteredFiles).anyMatch(file -> file.endsWith(DEFAULT_SUFFIXES[0]))) {
                     for (String file : filteredFiles) {
-                        client.newSCPFileTransfer().download(remoteDir + file, tempDir.resolve(host + "-" + file).toString());
+                        client.newSCPFileTransfer().download(file, tempDir.resolve(host + "-" + Paths.get(file).getFileName()).toString());
                         System.out.println(String.format("%s downloaded", file));
                     }
                     successfulHosts++;
@@ -118,6 +121,6 @@ public final class RemoteFileFetcher extends AbstractComponent {
 
     @Override
     public String showLabel(AdministratorCommand command) {
-        return "<comma-separated remote ips> <remote directory> <local destination> <files prefix> [<comma-separated files extensions>]";
+        return "<comma-separated remote ips> <remote results command> <local destination> <files prefix> [<comma-separated files extensions>]";
     }
 }

@@ -54,7 +54,7 @@ public final class BatchAdministrator {
                 handler.handleCommand(AdministratorCommand.RUN_EXPERIMENT1, fedoraUrl, storageDirectory, dataset);
                 handler.handleCommand(AdministratorCommand.RUN_EXPERIMENT2, fedoraUrl, dataset);
                 handler.handleCommand(AdministratorCommand.RUN_EXPERIMENT3, fedoraUrl, dataset);
-                handler.handleCommand(AdministratorCommand.FETCH_RESULTS, workerIps, remoteProps.get("directory"),
+                handler.handleCommand(AdministratorCommand.FETCH_RESULTS, workerIps, remoteProps.get("command"),
                         localResultsDirectory, remoteProps.get("prefix"), remoteProps.get("suffixes"));
                 handler.handleCommand(AdministratorCommand.STOP_WORKERS);
             }
@@ -174,11 +174,11 @@ public final class BatchAdministrator {
 
     private static Map<String, String> extractRemoteResultsProperties(Properties properties) {
         Map<String, String> props = new HashMap<>();
-        props.put("directory", properties.getProperty("remote-results-directory", "/vt-fedora-benchmark/experiments"));
+        props.put("command", properties.getProperty("remote-results-command", "python collector.py"));
         props.put("prefix", properties.getProperty("remote-results-prefix", "experiment"));
         props.put("suffixes", properties.getProperty("remote-results-suffixes", ".csv,.out"));
 
-        System.out.println(String.format("Remote results directory: %s", props.get("directory")));
+        System.out.println(String.format("Remote results command: %s", props.get("command")));
         System.out.println(String.format("Remote results prefix: %s", props.get("prefix")));
         System.out.println(String.format("Remote results suffixes: %s", props.get("suffixes")));
         return props;
