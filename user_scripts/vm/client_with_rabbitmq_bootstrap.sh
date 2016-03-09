@@ -16,6 +16,7 @@ sudo rabbitmqctl delete_user guest
 sudo service rabbitmq-server restart
 rm rabbitmq-signing-key-public.asc
 
+sudo apt-get install -y git
 git clone https://DedoCibula@bitbucket.org/DedoCibula/vt-fedora-benchmark.git
 vt-fedora-benchmark/utils/client_setup.sh
 ln -s vt-fedora-benchmark/utils/vm_collector.py collector.py

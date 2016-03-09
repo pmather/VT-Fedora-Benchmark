@@ -4,7 +4,6 @@ sudo add-apt-repository ppa:openjdk-r/ppa -y
 sudo apt-get update && apt-get install -y \
 	build-essential \
 	curl \
-	git \
 	screen \
 	openssh-server \
 	software-properties-common \
