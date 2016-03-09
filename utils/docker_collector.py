@@ -1,4 +1,4 @@
-from os
+import os
 from subprocess import call
 
 
