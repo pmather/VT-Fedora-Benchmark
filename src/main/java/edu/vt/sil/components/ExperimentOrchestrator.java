@@ -118,8 +118,7 @@ public final class ExperimentOrchestrator extends AbstractComponent {
                 executeExperiment(RabbitMQCommand.EXPERIMENT3, null);
                 break;
             case STOP_WORKERS:
-                if (!activeWorkers.isEmpty())
-                    activeWorkers.removeAll(producer.sendControlMessage(RabbitMQCommand.SHUTDOWN, activeWorkers.size()));
+                activeWorkers.removeAll(producer.sendControlMessage(RabbitMQCommand.SHUTDOWN, activeWorkers.size()));
                 executedCommands.clear();
         }
     }
