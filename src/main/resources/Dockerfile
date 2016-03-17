@@ -3,7 +3,6 @@ MAINTAINER Dedo Cibula <dedo.cibula@gmail.com>
 
 RUN apt-get update && apt-get install -y \
 	build-essential \
-	curl \
 	fish \
 	git \
 	htop \
@@ -11,15 +10,11 @@ RUN apt-get update && apt-get install -y \
 	openssh-server \
 	software-properties-common \
 	tree \
-	unzip \
 	vim \
-	wget \
 	zsh
-RUN apt-get update -y
-RUN apt-get upgrade -y
 
 ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get install -y \
+RUN apt-get update && apt-get install -y \
 	libcap-dev \
 	libhdf5-dev \
 	python-dev \
@@ -28,8 +23,7 @@ RUN apt-get install -y \
 	python-nose \
 	python-pycurl \
 	python-scipy
-RUN wget -q https://bootstrap.pypa.io/get-pip.py -O get-pip.py
-RUN python get-pip.py && pip install boto3 pika xmltodict requests && rm get-pip.py
+RUN wget -q https://bootstrap.pypa.io/get-pip.py -O get-pip.py && python get-pip.py && pip install boto3 pika xmltodict requests && rm get-pip.py
 
 ENV BENCHMARK_HOME /vt-fedora-benchmark/experiments
 ENV BENCHMARK_URL https://DedoCibula@bitbucket.org/DedoCibula/vt-fedora-benchmark.git
