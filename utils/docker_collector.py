@@ -4,7 +4,7 @@ from subprocess import call
 
 def main():
     threads = int(os.getenv("THREADS", "1"))
-    for i in range(1, threads):
+    for i in range(1, threads + 1):
         base_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), str(i))
         if not os.path.exists(base_path):
             os.makedirs(base_path)
