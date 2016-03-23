@@ -2,6 +2,10 @@
 RABBITMQ_URL=
 RABBITMQ_USERNAME="admin"
 RABBITMQ_PASSWORD="admin"
+THREADS=1
+
+echo export THREADS="${THREADS}" >> ~/.bashrc
+source ~/.bashrc
 
 sudo apt-get install -y git
 git clone https://DedoCibula@bitbucket.org/DedoCibula/vt-fedora-benchmark.git
@@ -13,4 +17,6 @@ sudo apt-get update && apt-get install -y \
 curl -fsSL https://get.docker.com/ | sh
 sudo service ntp restart
 
-docker run -d --privileged --name=fedora_benchmark dedocibula/fedora-benchmark python experiment_coordinator.py ${RABBITMQ_URL} ${RABBITMQ_USERNAME} ${RABBITMQ_PASSWORD}
+for i in {1..${THREADS}}; do
+    docker run -d --privileged --name=fedora_benchmark_${i} dedocibula/fedora-benchmark python experiment_coordinator.py ${RABBITMQ_URL} ${RABBITMQ_USERNAME} ${RABBITMQ_PASSWORD}
+done

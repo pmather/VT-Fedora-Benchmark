@@ -106,7 +106,8 @@ public final class RemoteFileFetcher extends AbstractComponent {
 
                 if (!Arrays.equals(suffixes, DEFAULT_SUFFIXES) || Arrays.stream(filteredFiles).anyMatch(file -> file.endsWith(DEFAULT_SUFFIXES[0]))) {
                     for (String file : filteredFiles) {
-                        client.newSCPFileTransfer().download(file, tempDir.resolve(host + "-" + Paths.get(file).getFileName()).toString());
+                        Path path = Paths.get(file);
+                        client.newSCPFileTransfer().download(file, tempDir.resolve(String.format("%s-%s-%s", host, path.getParent().getFileName(), path.getFileName())).toString());
                         System.out.println(String.format("%s downloaded", file));
                     }
                     successfulHosts++;
