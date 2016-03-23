@@ -25,7 +25,7 @@ git clone https://DedoCibula@bitbucket.org/DedoCibula/vt-fedora-benchmark.git
 vt-fedora-benchmark/utils/client_setup.sh
 ln -s vt-fedora-benchmark/utils/vm_collector.py collector.py
 
-for i in {1..${THREADS}}; do
+for ((i = 1; i <= ${THREADS}; i++)) ; do
     mkdir ${PWD}/vt-fedora-benchmark/${i}
     cp -R ${PWD}/vt-fedora-benchmark/experiments ${PWD}/vt-fedora-benchmark/${i}
 

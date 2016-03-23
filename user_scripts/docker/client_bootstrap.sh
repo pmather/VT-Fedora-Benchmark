@@ -17,6 +17,6 @@ sudo apt-get update && apt-get install -y \
 curl -fsSL https://get.docker.com/ | sh
 sudo service ntp restart
 
-for i in {1..${THREADS}}; do
+for ((i = 1; i <= ${THREADS}; i++)) ; do
     docker run -d --privileged --name=fedora_benchmark_${i} dedocibula/fedora-benchmark python experiment_coordinator.py ${RABBITMQ_URL} ${RABBITMQ_USERNAME} ${RABBITMQ_PASSWORD}
 done
