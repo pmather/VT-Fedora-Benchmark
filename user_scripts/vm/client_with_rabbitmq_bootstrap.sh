@@ -4,8 +4,8 @@ RABBITMQ_USERNAME="admin"
 RABBITMQ_PASSWORD="admin"
 THREADS=1
 
-echo export THREADS="${THREADS}" >> ~/.bashrc
-source ~/.bashrc
+echo export THREADS="${THREADS}" >> /etc/profile
+source /etc/profile
 
 wget https://www.rabbitmq.com/rabbitmq-signing-key-public.asc
 sudo apt-key add rabbitmq-signing-key-public.asc

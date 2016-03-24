@@ -4,8 +4,8 @@ RABBITMQ_USERNAME="admin"
 RABBITMQ_PASSWORD="admin"
 THREADS=1
 
-echo export THREADS="${THREADS}" >> ~/.bashrc
-source ~/.bashrc
+echo export THREADS="${THREADS}" >> /etc/profile
+source /etc/profile
 
 sudo apt-get install -y git
 git clone https://DedoCibula@bitbucket.org/DedoCibula/vt-fedora-benchmark.git
