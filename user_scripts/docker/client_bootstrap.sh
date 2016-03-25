@@ -9,7 +9,7 @@ source /etc/profile
 
 sudo apt-get install -y git
 git clone https://DedoCibula@bitbucket.org/DedoCibula/vt-fedora-benchmark.git
-ln -s vt-fedora-benchmark/utils/docker_collector.py collector.py
+ln -s vt-fedora-benchmark/orchestrators/docker_collector.py collector.py
 
 sudo apt-get update && apt-get install -y \
     curl \

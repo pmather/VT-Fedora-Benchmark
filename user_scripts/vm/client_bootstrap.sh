@@ -10,7 +10,7 @@ source /etc/profile
 sudo apt-get install -y git
 git clone https://DedoCibula@bitbucket.org/DedoCibula/vt-fedora-benchmark.git
 vt-fedora-benchmark/utils/client_setup.sh
-ln -s vt-fedora-benchmark/utils/vm_collector.py collector.py
+ln -s vt-fedora-benchmark/orchestrators/vm_collector.py collector.py
 
 echo_supervisord_conf > /etc/supervisord.conf
 for ((i = 1; i <= ${THREADS}; i++)) ; do

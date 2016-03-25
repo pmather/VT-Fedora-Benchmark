@@ -1,7 +1,6 @@
 import pika
 import sys
 import traceback
-import uuid
 import os
 
 from commons import RabbitMQClient, GoogleDriveDownloader
@@ -10,35 +9,6 @@ connection = None
 work_queue_name = None
 host_id = None
 temp_queue_name = None
-
-
-def on_request(ch, method, props, body):
-    print "Received command: " + body
-
-    if body == "ADD_WORKER" and props.correlation_id:
-        if not props.headers and ("controlTopicName" not in props.headers or "workQueueName" not in props.headers):
-            print "Missing necessary headers (controlTopicName and workQueueName)"
-            return
-
-        global work_queue_name
-        work_queue_name = props.headers["workQueueName"]
-        control_topic_name = props.headers["controlTopicName"]
-
-        global temp_queue_name
-        channel = connection.channel()
-        channel.exchange_declare(exchange=control_topic_name, type='fanout')
-        result = channel.queue_declare(exclusive=True)
-        temp_queue_name = result.method.queue
-        channel.queue_bind(exchange=control_topic_name, queue=temp_queue_name)
-
-        print "Beginning processing messages on control topic"
-
-        channel.basic_consume(handle_control_message, queue=temp_queue_name, no_ack=True)
-
-        acknowledge(ch, props)
-        ch.basic_ack(delivery_tag=method.delivery_tag)
-    else:
-        print "Unrecognized command: " + body
 
 
 def handle_control_message(ch, method, props, body):
@@ -95,24 +65,29 @@ def acknowledge(ch, props):
                      body=str(host_id))
 
 
-def main():
+def main(rabbitmq_host, rabbitmq_username, rabbitmq_password, worker_id, control_topic, work_queue):
     global connection
     global host_id
+    global work_queue_name
+    global temp_queue_name
 
-    host_id = uuid.uuid4()
+    host_id = worker_id
+    work_queue_name = work_queue
 
-    credentials = pika.PlainCredentials(sys.argv[2], sys.argv[3])
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=sys.argv[1], credentials=credentials))
+    credentials = pika.PlainCredentials(rabbitmq_username, rabbitmq_password)
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host, credentials=credentials))
+
     channel = connection.channel()
+    channel.exchange_declare(exchange=control_topic, type='fanout')
+    result = channel.queue_declare(exclusive=True)
+    temp_queue_name = result.method.queue
+    channel.queue_bind(exchange=control_topic, queue=temp_queue_name)
 
-    channel.queue_declare(queue='wait_queue', durable=True)
+    print "Listening for commands on the control topic. CTRL + C to exit"
 
-    channel.basic_qos(prefetch_count=1)
-    channel.basic_consume(on_request, queue='wait_queue')
-
-    print "Listening for commands on the wait queue. CTRL + C to exit"
+    channel.basic_consume(handle_control_message, queue=temp_queue_name, no_ack=True)
 
     channel.start_consuming()
 
 
-if __name__ == "__main__": main()
+if __name__ == "__main__": main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
