@@ -1,105 +1,66 @@
-import pika
+import orchestrator
+import os
 import sys
 import uuid
-import os
 from subprocess import call
 
-rabbitmq_host = None
-rabbitmq_username = None
-rabbitmq_password = None
-host_id = None
 
-running_containers_file = None
+class DockerManager(orchestrator.WorkerManager):
+    CONTAINERS_FILENAME = "running-containers.txt"
 
+    def __init__(self, host_uid, rabbitmq_host, rabbitmq_username, rabbitmq_password, with_link):
+        super(DockerManager, self).__init__(host_uid, rabbitmq_host, rabbitmq_username, rabbitmq_password)
+        self.running_containers = open(DockerManager.CONTAINERS_FILENAME, "wr+")
+        self.with_link = with_link
 
-def start_docker(id, control_topic_name, work_queue_name):
-    call("docker run -d --privileged --name={} dedocibula/fedora-benchmark python "
-         "experiment_coordinator.py {} {} {} {} {} {}".format(id, rabbitmq_host, rabbitmq_username, rabbitmq_password,
-                                                              id, control_topic_name, work_queue_name))
+    @staticmethod
+    def fetch_results():
+        with open(DockerManager.CONTAINERS_FILENAME) as f:
+            running_containers = f.readlines()
+        for i in range(0, len(running_containers)):
+            base_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), str(i + 1))
+            if not os.path.exists(base_path):
+                os.makedirs(base_path)
+            for file in os.listdir(base_path):
+                file_path = os.path.join(base_path, file)
+                try:
+                    if os.path.isfile(file_path):
+                        os.unlink(file_path)
+                except Exception, e:
+                    print e
+            call("docker cp {}:/vt-fedora-benchmark/experiments/. {}".format(running_containers[i], base_path),
+                 shell=True)
+            with open(os.path.join(base_path, "experiment.out"), "w") as f, open(os.devnull, 'w') as fnull:
+                call(["docker", "logs", running_containers[i]], stdout=f, stderr=fnull)
+            for file in os.listdir(base_path):
+                print os.path.join(base_path, file)
 
+    def start_workers(self, count, control_topic_name, work_queue_name):
+        for i in range(1, count + 1):
+            call("docker run -d --privileged " + "--link={}:{}".format(self.rabbitmq_host, self.rabbitmq_host) if self.with_link else "" +
+                 " --name=fedora_benchmark_{} dedocibula/fedora-benchmark python experiment_coordinator.py {} {} {} {}_{} {} {}".format(
+                str(i), self.rabbitmq_host,
+                self.rabbitmq_username, self.rabbitmq_password,
+                self.host_uid, str(i), control_topic_name,
+                work_queue_name))
+            self.running_containers.write("fedora_benchmark_{}\n".format(str(i)))
 
-def stop_docker(name):
-    call("docker stop {} && docker rm {}".format(name, name))
-
-
-def fetch_results():
-    docker_containers = running_containers_file.readlines()
-    for i in range(0, len(docker_containers)):
-        base_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), str(i + 1))
-        if not os.path.exists(base_path):
-            os.makedirs(base_path)
-        for file in os.listdir(base_path):
-            file_path = os.path.join(base_path, file)
-            try:
-                if os.path.isfile(file_path):
-                    os.unlink(file_path)
-            except Exception, e:
-                print e
-        call("docker cp {}:/vt-fedora-benchmark/experiments/. {}".format(docker_containers[i], base_path), shell=True)
-        with open(os.path.join(base_path, "experiment.out"), "w") as f, open(os.devnull, 'w') as fnull:
-            call(["docker", "logs", docker_containers[i]], stdout=f, stderr=fnull)
-        for file in os.listdir(base_path):
-            print os.path.join(base_path, file)
-
-
-def on_request(ch, method, props, body):
-    print "Received command: " + body
-
-    if body == "ADD_WORKERS" and props.correlation_id:
-        if not props.headers and ("controlTopicName" not in props.headers or "workQueueName" not in props.headers):
-            print "Missing necessary headers (controlTopicName and workQueueName)"
-            return
-
-        global running_containers_file
-        for container in running_containers_file.readlines():
-            stop_docker(container)
-        running_containers_file.seek(0)
-        running_containers_file.truncate()
-
-        work_queue_name = props.headers["workQueueName"]
-        control_topic_name = props.headers["controlTopicName"]
-        worker_count = int(props.headers["workerCount"]) if "workerCount" in props.headers else 1
-
-        for i in range(0, worker_count):
-            name = "{}_fedora_benchmark_{}".format(host_id, str(i))
-            start_docker(name, control_topic_name, work_queue_name)
-            running_containers_file.write(name + "\n")
-            ch.basic_publish(exchange='',
-                             routing_key=props.reply_to,
-                             properties=pika.BasicProperties(correlation_id=props.correlation_id),
-                             body=str(name))
-
-        ch.basic_ack(delivery_tag=method.delivery_tag)
-    else:
-        print "Unrecognized command: " + body
+    def stop_workers(self):
+        for container in self.running_containers.readlines():
+            call("docker stop {} && docker rm {}".format(container, container))
+        self.running_containers.seek(0)
+        self.running_containers.truncate()
 
 
 def main():
-    global rabbitmq_host
-    global rabbitmq_username
-    global rabbitmq_password
-    global host_id
-    global running_containers_file
+    command = sys.argv[1]
 
-    rabbitmq_host = sys.argv[1]
-    rabbitmq_username = sys.argv[2]
-    rabbitmq_password = sys.argv[3]
-    host_id = uuid.uuid4()
-
-    credentials = pika.PlainCredentials(rabbitmq_username, rabbitmq_password)
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host, credentials=credentials))
-    channel = connection.channel()
-
-    channel.queue_declare(queue='wait_queue', durable=True)
-
-    channel.basic_qos(prefetch_count=1)
-    channel.basic_consume(on_request, queue='wait_queue')
-
-    print "Listening for commands on the wait queue. CTRL + C to exit"
-
-    running_containers_file = open("running-containers.txt", "r+")
-    channel.start_consuming()
-    running_containers_file.close()
+    if command == "start_with":
+        orchestrator.start_with(DockerManager(uuid.uuid4(), sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5] == "True"))
+    elif command == "fetch_results":
+        DockerManager.fetch_results()
+    else:
+        print "Unrecognized command"
 
 
-if __name__ == "__main__": main()
+if __name__ == '__main__': main()

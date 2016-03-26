@@ -2,21 +2,31 @@
 RABBITMQ_URL=
 RABBITMQ_USERNAME="admin"
 RABBITMQ_PASSWORD="admin"
-THREADS=1
-
-echo export THREADS="${THREADS}" >> /etc/profile
-source /etc/profile
-
-sudo apt-get install -y git
-git clone https://DedoCibula@bitbucket.org/DedoCibula/vt-fedora-benchmark.git
-ln -s vt-fedora-benchmark/orchestrators/docker_collector.py collector.py
 
 sudo apt-get update && apt-get install -y \
     curl \
+    git \
     ntp
+git clone https://DedoCibula@bitbucket.org/DedoCibula/vt-fedora-benchmark.git
+ln -s vt-fedora-benchmark/orchestrators/docker_orchestrator.py collector.py
+
 curl -fsSL https://get.docker.com/ | sh
 sudo service ntp restart
 
-for ((i = 1; i <= ${THREADS}; i++)) ; do
-    docker run -d --privileged --name=fedora_benchmark_${i} dedocibula/fedora-benchmark python experiment_coordinator.py ${RABBITMQ_URL} ${RABBITMQ_USERNAME} ${RABBITMQ_PASSWORD}
-done
+docker pull dedocibula/fedora-benchmark
+
+wget https://bootstrap.pypa.io/get-pip.py
+sudo python get-pip.py
+sudo pip install supervisor
+rm get-pip.py
+
+echo_supervisord_conf > /etc/supervisord.conf
+echo "[program:docker_orchestrator]" >> /etc/supervisord.conf
+echo "command=nice -n -5 python docker_orchestrator.py start_with ${RABBITMQ_URL} ${RABBITMQ_USERNAME} ${RABBITMQ_PASSWORD} False" >> /etc/supervisord.conf
+echo "directory=${PWD}/vt-fedora-benchmark/orchestrators" >> /etc/supervisord.conf
+echo "redirect_stderr=true" >> /etc/supervisord.conf
+echo "stdout_logfile=${PWD}/vt-fedora-benchmark/orchestrators/experiment.out" >> /etc/supervisord.conf
+echo "autostart=true" >> /etc/supervisord.conf
+echo "autorestart=unexpected" >> /etc/supervisord.conf
+
+supervisord
