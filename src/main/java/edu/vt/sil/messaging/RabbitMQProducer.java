@@ -57,19 +57,20 @@ public final class RabbitMQProducer implements AutoCloseable {
         Map<String, Object> headers = new HashMap<>();
         headers.put("controlTopicName", CONTROL_TOPIC_NAME);
         headers.put("workQueueName", WORK_QUEUE_NAME);
-        connectionHeaders = Collections.unmodifiableMap(headers);
+        connectionHeaders = headers;
     }
 
-    public String addWorker() throws Exception {
+    public List<String> addWorkers(int count) throws Exception {
+        connectionHeaders.put("workerCount", count);
         AMQP.BasicProperties properties = MessageProperties.TEXT_PLAIN
                 .builder()
                 .headers(connectionHeaders)
                 .correlationId(UUID.randomUUID().toString())
                 .replyTo(WAIT_QUEUE_CALLBACK)
                 .build();
-        channel.basicPublish("", WAIT_QUEUE_NAME, properties, RabbitMQCommand.ADD_WORKER.name().getBytes(StandardCharsets.UTF_8));
+        channel.basicPublish("", WAIT_QUEUE_NAME, properties, RabbitMQCommand.ADD_WORKERS.name().getBytes(StandardCharsets.UTF_8));
 
-        return waitForHostAcknowledgements(waitQueueConsumer, properties.getCorrelationId(), 1).get(0);
+        return waitForHostAcknowledgements(waitQueueConsumer, properties.getCorrelationId(), count);
     }
 
     public List<String> sendControlMessage(RabbitMQCommand command, int waitAcknowledgements) throws Exception {

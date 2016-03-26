@@ -32,13 +32,13 @@ def on_request(ch, method, props, body):
         control_topic_name = props.headers["controlTopicName"]
         worker_count = int(props.headers["workerCount"]) if "workerCount" in props.headers else 1
 
-        manager.start_workers(worker_count, control_topic_name, work_queue_name)
+        worker_ids = manager.start_workers(worker_count, control_topic_name, work_queue_name)
 
-        for _ in range(0, worker_count):
+        for worker_id in worker_ids:
             ch.basic_publish(exchange='',
                              routing_key=props.reply_to,
                              properties=pika.BasicProperties(correlation_id=props.correlation_id),
-                             body=str(name))
+                             body=str(worker_id))
 
         ch.basic_ack(delivery_tag=method.delivery_tag)
     else:

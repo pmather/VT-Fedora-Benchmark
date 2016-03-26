@@ -8,12 +8,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -28,7 +23,7 @@ public final class ExperimentOrchestrator extends AbstractComponent {
     private Set<RabbitMQCommand> executedCommands;
 
     private AdministratorCommand command;
-    private int workerCount;
+    private List<Integer> workerCounts;
     private URL fedoraUrl;
     private String storageFolder;
     private List<String> hdf5WorkItems;
@@ -39,6 +34,7 @@ public final class ExperimentOrchestrator extends AbstractComponent {
         this.producer = producer;
         this.activeWorkers = new HashSet<>();
         this.executedCommands = new HashSet<>();
+        this.workerCounts = new ArrayList<>();
     }
 
     @Override
@@ -54,9 +50,12 @@ public final class ExperimentOrchestrator extends AbstractComponent {
                     throw new IllegalArgumentException(String.format("Invalid number of parameters. " +
                             "Expected: 1 - Received: %s", arguments.length));
 
-                workerCount = Integer.parseInt(arguments[0]);
-                if (workerCount < 1)
-                    throw new IllegalArgumentException("Worker count cannot be less than 1");
+                for (String countString : arguments[0].split(",")) {
+                    int workerCount = Integer.parseInt(countString);
+                    if (workerCount < 1)
+                        throw new IllegalArgumentException("Worker count cannot be less than 1");
+                    workerCounts.add(workerCount);
+                }
                 break;
             case RUN_EXPERIMENT1:
                 if (activeWorkers.isEmpty())
@@ -102,8 +101,8 @@ public final class ExperimentOrchestrator extends AbstractComponent {
     protected void execute() throws Exception {
         switch (command) {
             case START_WORKERS:
-                for (int i = activeWorkers.size(); i < workerCount; i++)
-                    activeWorkers.add(producer.addWorker());
+                for (Integer count : workerCounts)
+                    activeWorkers.addAll(producer.addWorkers(count));
                 break;
             case RUN_EXPERIMENT1:
                 Map<String, Object> headers = new HashMap<>();
@@ -120,6 +119,7 @@ public final class ExperimentOrchestrator extends AbstractComponent {
             case STOP_WORKERS:
                 activeWorkers.removeAll(producer.sendControlMessage(RabbitMQCommand.SHUTDOWN, activeWorkers.size()));
                 executedCommands.clear();
+                workerCounts.clear();
         }
     }
 
@@ -127,7 +127,7 @@ public final class ExperimentOrchestrator extends AbstractComponent {
     public String showLabel(AdministratorCommand command) {
         switch (command) {
             case START_WORKERS:
-                return "<worker count>";
+                return "<comma-separated worker count>";
             case RUN_EXPERIMENT1:
                 return "<fedora url> <external storage folder (GDrive)> <input file (HDF5 file names)>";
             case RUN_EXPERIMENT2:
@@ -154,7 +154,7 @@ public final class ExperimentOrchestrator extends AbstractComponent {
         producer.purgeWorkItems();
         for (String workItem : hdf5WorkItems)
             producer.scheduleWorkItem(workItem);
-        for (int i = 0; i < workerCount; i++)
+        for (int i = 0; i < workerCounts.stream().reduce(0, Integer::sum); i++)
             producer.scheduleWorkItem(STOP_WORK_ITEM);
 
         List<String> hosts = producer.sendControlMessage(experiment, activeWorkers.size(), headers);

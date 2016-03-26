@@ -5,7 +5,7 @@ package edu.vt.sil.messaging;
  * Created on: 1.3.2016.
  */
 public enum RabbitMQCommand {
-    ADD_WORKER,
+    ADD_WORKERS,
     EXPERIMENT1,
     EXPERIMENT2,
     EXPERIMENT3,

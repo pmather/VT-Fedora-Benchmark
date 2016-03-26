@@ -36,14 +36,19 @@ class DockerManager(orchestrator.WorkerManager):
                 print os.path.join(base_path, file)
 
     def start_workers(self, count, control_topic_name, work_queue_name):
+        worker_ids = []
         for i in range(1, count + 1):
-            call("docker run -d --privileged " + "--link={}:{}".format(self.rabbitmq_host, self.rabbitmq_host) if self.with_link else "" +
-                 " --name=fedora_benchmark_{} dedocibula/fedora-benchmark python experiment_coordinator.py {} {} {} {}_{} {} {}".format(
-                str(i), self.rabbitmq_host,
-                self.rabbitmq_username, self.rabbitmq_password,
-                self.host_uid, str(i), control_topic_name,
-                work_queue_name))
+            id = self.host_uid + "_" + str(i)
+            call("docker run -it --privileged " + \
+                 ("--link={}:{}".format(self.rabbitmq_host, self.rabbitmq_host) if self.with_link else "") + \
+                 " --name=fedora_benchmark_{} dedocibula/fedora-benchmark python experiment_coordinator.py {} {} {} {} {} {}".format(
+                     str(i), self.rabbitmq_host,
+                     self.rabbitmq_username, self.rabbitmq_password,
+                     id, control_topic_name, work_queue_name), shell=True)
             self.running_containers.write("fedora_benchmark_{}\n".format(str(i)))
+            worker_ids.append(id)
+        self.running_containers.flush()
+        return worker_ids
 
     def stop_workers(self):
         for container in self.running_containers.readlines():
@@ -56,7 +61,7 @@ def main():
     command = sys.argv[1]
 
     if command == "start_with":
-        orchestrator.start_with(DockerManager(uuid.uuid4(), sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5] == "True"))
+        orchestrator.start_with(DockerManager(str(uuid.uuid4()), sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5] == "True"))
     elif command == "fetch_results":
         DockerManager.fetch_results()
     else:

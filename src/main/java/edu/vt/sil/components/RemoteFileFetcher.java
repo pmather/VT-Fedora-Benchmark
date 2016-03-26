@@ -13,7 +13,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -105,12 +107,14 @@ public final class RemoteFileFetcher extends AbstractComponent {
                         .toArray(String[]::new);
 
                 if (!Arrays.equals(suffixes, DEFAULT_SUFFIXES) || Arrays.stream(filteredFiles).anyMatch(file -> file.endsWith(DEFAULT_SUFFIXES[0]))) {
+                    Set<String> uniqueResults = new HashSet<>();
                     for (String file : filteredFiles) {
                         Path path = Paths.get(file);
+                        uniqueResults.add(path.getParent().toString());
                         client.newSCPFileTransfer().download(file, tempDir.resolve(String.format("%s-%s-%s", host, path.getParent().getFileName(), path.getFileName())).toString());
                         System.out.println(String.format("%s downloaded", file));
                     }
-                    successfulHosts++;
+                    successfulHosts += uniqueResults.size();
                 }
             } catch (IOException e) {
                 throw new Exception(String.format("Error occurred for host %s: %s", host, e));

@@ -1,0 +1,8 @@
+{
+	"benchmark_suite": [
+		{
+			"worker_counts": [ 1 ],
+			"steps": [ "run_experiment1", "run_experiment2", "run_experiment3" ]
+		}
+	]
+}

@@ -1,5 +1,6 @@
 package edu.vt.sil.administrator;
 
+import com.google.gson.*;
 import edu.vt.sil.messaging.RabbitMQCommand;
 import edu.vt.sil.messaging.RabbitMQProducer;
 
@@ -11,10 +12,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Author: dedocibula
@@ -39,21 +38,35 @@ public final class BatchAdministrator {
             String storageDirectory = extractExternalStorageDirectory(properties);
             CommandHandler handler = createCommandHandler(producer, properties);
             String workerIps = extractWorkersPublicIps(properties);
-            int workerCount = workerIps.split(",").length;
             Map<String, String> remoteProps = extractRemoteResultsProperties(properties);
             String localResultsDirectory = extractLocalResultsDirectory(properties);
+            List<Map<String, List<String>>> benchmarkRuns = extractBenchmarkRuns(properties);
             System.out.println("Properties extracted\n");
 
             System.out.println("======================================================");
             System.out.println("STARTING BENCHMARK...");
             System.out.println("======================================================");
 
-            for (int currentCount = 1; currentCount <= workerCount; currentCount++) {
-                System.out.println(String.format("Current worker count: %s\n", currentCount));
-                handler.handleCommand(AdministratorCommand.START_WORKERS, String.valueOf(currentCount));
-                handler.handleCommand(AdministratorCommand.RUN_EXPERIMENT1, fedoraUrl, storageDirectory, dataset);
-                handler.handleCommand(AdministratorCommand.RUN_EXPERIMENT2, fedoraUrl, dataset);
-                handler.handleCommand(AdministratorCommand.RUN_EXPERIMENT3, fedoraUrl, dataset);
+            for (Map<String, List<String>> run : benchmarkRuns) {
+                System.out.println(String.format("Current worker counts: %s\n", run.get("workerCounts")));
+                handler.handleCommand(AdministratorCommand.START_WORKERS, run.get("workerCounts").stream().collect(Collectors.joining(",")));
+                for (String step : run.get("steps")) {
+                    AdministratorCommand command = extractCommand(step);
+                    //noinspection ConstantConditions
+                    switch (command) {
+                        case RUN_EXPERIMENT1:
+                            handler.handleCommand(AdministratorCommand.RUN_EXPERIMENT1, fedoraUrl, storageDirectory, dataset);
+                            break;
+                        case RUN_EXPERIMENT2:
+                            handler.handleCommand(AdministratorCommand.RUN_EXPERIMENT2, fedoraUrl, dataset);
+                            break;
+                        case RUN_EXPERIMENT3:
+                            handler.handleCommand(AdministratorCommand.RUN_EXPERIMENT3, fedoraUrl, dataset);
+                            break;
+                        default:
+                            System.out.println(String.format("Skipping illegal command: %s", command));
+                    }
+                }
                 handler.handleCommand(AdministratorCommand.FETCH_RESULTS, workerIps, remoteProps.get("command"),
                         localResultsDirectory, remoteProps.get("prefix"), remoteProps.get("suffixes"));
                 handler.handleCommand(AdministratorCommand.STOP_WORKERS);
@@ -195,5 +208,49 @@ public final class BatchAdministrator {
 
         System.out.println(String.format("Local results directory: %s", localDirectory));
         return currentDateDir.toString();
+    }
+
+    private static List<Map<String, List<String>>> extractBenchmarkRuns(Properties properties) throws Exception {
+        List<Map<String, List<String>>> result = new ArrayList<>();
+        Path benchmarkFile = Paths.get(properties.getProperty("benchmark-suite-file"));
+        if (Files.notExists(benchmarkFile) || !Files.isDirectory(benchmarkFile))
+            throw new IllegalArgumentException(String.format("No directory: %s", benchmarkFile));
+
+        JsonObject benchmarkSuite = new JsonParser().parse(benchmarkFile.toString()).getAsJsonObject();
+        JsonArray benchmarks = benchmarkSuite.getAsJsonArray("benchmark_suite");
+        for (JsonElement benchmark : benchmarks) {
+            Map<String, List<String>> benchmarkMap = new HashMap<>();
+            List<String> workerCounts = new Gson().<List<String>>fromJson(benchmark.getAsJsonObject().getAsJsonArray("worker_counts"), List.class);
+            if (workerCounts.stream().anyMatch(BatchAdministrator::checkInvalidCount))
+                throw new IllegalArgumentException("Worker counts must be integers greater than 0");
+            benchmarkMap.put("workerCounts", workerCounts);
+            List<String> steps = new Gson().<List<String>>fromJson(benchmark.getAsJsonObject().getAsJsonArray("steps"), List.class);
+            if (steps.stream().anyMatch(step -> extractCommand(step) == null))
+                throw new IllegalArgumentException("Steps must correspond to administrative commands (RUN_EXPERIMENT");
+            benchmarkMap.put("steps", steps);
+            result.add(benchmarkMap);
+        }
+
+        System.out.println(String.format("Benchmark suite: %s", benchmarkFile));
+        return result;
+    }
+
+    private static boolean checkInvalidCount(String count) {
+        try {
+            int i = Integer.parseInt(count.toUpperCase());
+            if (i < 1)
+                return true;
+        } catch (NumberFormatException e) {
+            return true;
+        }
+        return false;
+    }
+
+    private static AdministratorCommand extractCommand(String command) {
+        try {
+            return AdministratorCommand.valueOf(command);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 }
