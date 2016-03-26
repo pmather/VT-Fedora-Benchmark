@@ -217,7 +217,7 @@ public final class BatchAdministrator {
             throw new IllegalArgumentException(String.format("No directory: %s", benchmarkFile));
 
         JsonObject benchmarkSuite = new JsonParser().parse(benchmarkFile.toString()).getAsJsonObject();
-        JsonArray benchmarks = benchmarkSuite.getAsJsonArray("benchmark_suite");
+        JsonArray benchmarks = benchmarkSuite.getAsJsonArray("benchmarks");
         for (JsonElement benchmark : benchmarks) {
             Map<String, List<String>> benchmarkMap = new HashMap<>();
             List<String> workerCounts = new Gson().<List<String>>fromJson(benchmark.getAsJsonObject().getAsJsonArray("worker_counts"), List.class);
