@@ -17,6 +17,7 @@ class DockerManager(orchestrator.WorkerManager):
     def fetch_results():
         with open(DockerManager.CONTAINERS_FILENAME) as f:
             running_containers = f.readlines()
+        running_containers = [container.strip() for container in running_containers if container.strip()]
         for i in range(0, len(running_containers)):
             base_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), str(i + 1))
             if not os.path.exists(base_path):
@@ -39,7 +40,7 @@ class DockerManager(orchestrator.WorkerManager):
         worker_ids = []
         for i in range(1, count + 1):
             id = self.host_uid + "_" + str(i)
-            call("docker run -it --privileged " + \
+            call("docker run -d --privileged " + \
                  ("--link={}:{}".format(self.rabbitmq_host, self.rabbitmq_host) if self.with_link else "") + \
                  " --name=fedora_benchmark_{} dedocibula/fedora-benchmark python experiment_coordinator.py {} {} {} {} {} {}".format(
                      str(i), self.rabbitmq_host,

@@ -72,10 +72,6 @@ def main(rabbitmq_host, rabbitmq_username, rabbitmq_password, worker_id, control
     global work_queue_name
     global temp_queue_name
 
-    print rabbitmq_host
-    print rabbitmq_username
-    print rabbitmq_password
-
     host_id = worker_id
     work_queue_name = work_queue
 
