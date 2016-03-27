@@ -61,12 +61,13 @@ def handle_control_message(ch, method, props, body):
 
 def acknowledge(ch, props):
     ch.basic_publish(exchange='',
-                     routing_key=props.reply_to,
-                     properties=pika.BasicProperties(correlation_id=props.correlation_id),
+                     routing_key=props["reply_to"],
+                     properties=pika.BasicProperties(correlation_id=props["correlation_id"]),
                      body=str(host_id))
 
 
-def main(rabbitmq_host, rabbitmq_username, rabbitmq_password, worker_id, control_topic, work_queue):
+def main(rabbitmq_host, rabbitmq_username, rabbitmq_password, worker_id, control_topic, work_queue,
+         acknowledge_queue=None, correlation_id=None):
     global connection
     global host_id
     global work_queue_name
@@ -87,8 +88,12 @@ def main(rabbitmq_host, rabbitmq_username, rabbitmq_password, worker_id, control
     print "Listening for commands on the control topic. CTRL + C to exit"
 
     channel.basic_consume(handle_control_message, queue=temp_queue_name, no_ack=True)
+    if acknowledge_queue and correlation_id:
+        acknowledge(channel, {"reply_to": acknowledge_queue, "correlation_id": correlation_id})
 
     channel.start_consuming()
 
 
-if __name__ == "__main__": main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
+if __name__ == "__main__":
+    main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6],
+         sys.argv[7] if len(sys.argv) > 7 else None, sys.argv[8] if len(sys.argv) > 8 else None)

@@ -11,7 +11,7 @@ class WorkerManager(object):
         self.rabbitmq_username = rabbitmq_username
         self.rabbitmq_password = rabbitmq_password
 
-    def start_workers(self, count, control_topic_name, work_queue_name):
+    def start_workers(self, count, control_topic_name, work_queue_name, acknowledge_queue, correlation_id):
         raise NotImplementedError
 
     def stop_workers(self):
@@ -32,13 +32,7 @@ def on_request(ch, method, props, body):
         control_topic_name = props.headers["controlTopicName"]
         worker_count = int(props.headers["workerCount"]) if "workerCount" in props.headers else 1
 
-        worker_ids = manager.start_workers(worker_count, control_topic_name, work_queue_name)
-
-        for worker_id in worker_ids:
-            ch.basic_publish(exchange='',
-                             routing_key=props.reply_to,
-                             properties=pika.BasicProperties(correlation_id=props.correlation_id),
-                             body=str(worker_id))
+        manager.start_workers(worker_count, control_topic_name, work_queue_name, props.reply_to, props.correlation_id)
 
         ch.basic_ack(delivery_tag=method.delivery_tag)
     else:

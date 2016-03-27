@@ -11,7 +11,7 @@ class ProcessManager(orchestrator.WorkerManager):
 
     def __init__(self, host_uid, rabbitmq_host, rabbitmq_username, rabbitmq_password):
         super(ProcessManager, self).__init__(host_uid, rabbitmq_host, rabbitmq_username, rabbitmq_password)
-        self.result_directories = open(ProcessManager.RESULT_DIRS_FILENAME, "wr+")
+        self.result_directories = open(ProcessManager.RESULT_DIRS_FILENAME, "w+")
         self.project_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         self.opened_processes = []
 
@@ -25,8 +25,7 @@ class ProcessManager(orchestrator.WorkerManager):
                 for file in os.listdir(base_path):
                     print os.path.join(base_path, file)
 
-    def start_workers(self, count, control_topic_name, work_queue_name):
-        worker_ids = []
+    def start_workers(self, count, control_topic_name, work_queue_name, acknowledge_queue, correlation_id):
         for i in range(1, count + 1):
             id = self.host_uid + "_" + str(i)
             base_path = os.path.join(self.project_dir, str(i))
@@ -36,13 +35,9 @@ class ProcessManager(orchestrator.WorkerManager):
             output = os.path.join(base_path, "experiment.out")
             self.opened_processes.append(
                 Popen(["python", command, self.rabbitmq_host, self.rabbitmq_username, self.rabbitmq_password,
-                       id, control_topic_name, work_queue_name, ">>",
-                       output]))
+                       id, control_topic_name, work_queue_name, acknowledge_queue, correlation_id, ">>", output]))
             self.result_directories.write(base_path + "\n")
-            worker_ids.append(id)
         self.result_directories.flush()
-        print worker_ids
-        return worker_ids
 
     def stop_workers(self):
         for proc in self.opened_processes:
