@@ -6,17 +6,15 @@ from subprocess import call
 
 
 class DockerManager(orchestrator.WorkerManager):
-    CONTAINERS_FILENAME = "running-containers.txt"
-
     def __init__(self, host_uid, rabbitmq_host, rabbitmq_username, rabbitmq_password, with_link):
         super(DockerManager, self).__init__(host_uid, rabbitmq_host, rabbitmq_username, rabbitmq_password)
-        self.running_containers_file = open(DockerManager.CONTAINERS_FILENAME, "ar+")
+        self.running_containers_file = open(orchestrator.WorkerManager.RUNNING_WORKERS_FILENAME, "ar+")
         self.running_containers = [line.strip() for line in self.running_containers_file if line.strip()]
         self.with_link = with_link
 
     @staticmethod
     def fetch_results():
-        with open(DockerManager.CONTAINERS_FILENAME) as f:
+        with open(orchestrator.WorkerManager.RUNNING_WORKERS_FILENAME) as f:
             running_containers = f.readlines()
         running_containers = [container.strip() for container in running_containers if container.strip()]
         for i in range(0, len(running_containers)):

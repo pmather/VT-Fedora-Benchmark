@@ -28,28 +28,28 @@ def handle_control_message(ch, method, props, body):
             print "Starting experiment 1"
             experiment1.run(fedora_url, downloader, client)
             print "Finished running experiment 1. Acknowledging success"
-            acknowledge(ch, props)
+            acknowledge(ch, props.reply_to, props.correlation_id)
         elif body == "EXPERIMENT2":
             import experiment2
             client = RabbitMQClient(connection, work_queue_name)
             print "Starting experiment 2"
             experiment2.run(client)
             print "Finished running experiment 2. Acknowledging success"
-            acknowledge(ch, props)
+            acknowledge(ch, props.reply_to, props.correlation_id)
         elif body == "EXPERIMENT3":
             import experiment3
             client = RabbitMQClient(connection, work_queue_name)
             print "Starting experiment 3"
             experiment3.run(client)
             print "Finished running experiment 3. Acknowledging success"
-            acknowledge(ch, props)
+            acknowledge(ch, props.reply_to, props.correlation_id)
         elif body == "SHUTDOWN":
             if os.path.isfile("fedoraurls.txt"):
                 import clear_all
                 print "Performing cleanup"
                 clear_all.main("fedoraurls.txt")
             print "Disconnecting from control topic"
-            acknowledge(ch, props)
+            acknowledge(ch, props.reply_to, props.correlation_id)
             ch.queue_delete(queue=temp_queue_name)
             ch.close()
             connection.close()
@@ -59,10 +59,10 @@ def handle_control_message(ch, method, props, body):
         print "Error occurred: " + traceback.format_exc()
 
 
-def acknowledge(ch, props):
+def acknowledge(ch, reply_to, correlation_id):
     ch.basic_publish(exchange='',
-                     routing_key=props["reply_to"],
-                     properties=pika.BasicProperties(correlation_id=props["correlation_id"]),
+                     routing_key=reply_to,
+                     properties=pika.BasicProperties(correlation_id=correlation_id),
                      body=str(host_id))
 
 
@@ -89,7 +89,7 @@ def main(rabbitmq_host, rabbitmq_username, rabbitmq_password, worker_id, control
 
     channel.basic_consume(handle_control_message, queue=temp_queue_name, no_ack=True)
     if acknowledge_queue and correlation_id:
-        acknowledge(channel, {"reply_to": acknowledge_queue, "correlation_id": correlation_id})
+        acknowledge(channel, acknowledge_queue, correlation_id)
 
     channel.start_consuming()
 

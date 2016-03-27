@@ -1,9 +1,12 @@
 import pika
+import os
 
 manager = None
 
 
 class WorkerManager(object):
+    RUNNING_WORKERS_FILENAME = os.path.join(os.path.dirname(os.path.realpath(__file__)), "running-containers.txt")
+
     def __init__(self, host_uid, rabbitmq_host, rabbitmq_username, rabbitmq_password):
         super(WorkerManager, self).__init__()
         self.host_uid = host_uid
