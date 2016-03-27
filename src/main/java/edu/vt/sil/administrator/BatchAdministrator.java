@@ -10,7 +10,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -202,7 +202,7 @@ public final class BatchAdministrator {
         if (Files.notExists(localDirectory) || !Files.isDirectory(localDirectory))
             throw new IllegalArgumentException(String.format("No directory: %s", localDirectory));
 
-        Path currentDateDir = localDirectory.resolve(DateTimeFormatter.ISO_DATE.format(LocalDate.now()));
+        Path currentDateDir = localDirectory.resolve(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH").format(LocalDateTime.now()));
         if (Files.notExists(currentDateDir))
             Files.createDirectory(currentDateDir);
 
@@ -213,17 +213,17 @@ public final class BatchAdministrator {
     private static List<Map<String, List<String>>> extractBenchmarkRuns(Properties properties) throws Exception {
         List<Map<String, List<String>>> result = new ArrayList<>();
         Path benchmarkFile = Paths.get(properties.getProperty("benchmark-suite-file"));
-        if (Files.notExists(benchmarkFile) || !Files.isDirectory(benchmarkFile))
+        if (Files.notExists(benchmarkFile) || !Files.isRegularFile(benchmarkFile))
             throw new IllegalArgumentException(String.format("No directory: %s", benchmarkFile));
 
-        JsonObject benchmarkSuite = new JsonParser().parse(benchmarkFile.toString()).getAsJsonObject();
+        JsonObject benchmarkSuite = new JsonParser().parse(Files.newBufferedReader(benchmarkFile)).getAsJsonObject();
         JsonArray benchmarks = benchmarkSuite.getAsJsonArray("benchmarks");
         for (JsonElement benchmark : benchmarks) {
             Map<String, List<String>> benchmarkMap = new HashMap<>();
-            List<String> workerCounts = new Gson().<List<String>>fromJson(benchmark.getAsJsonObject().getAsJsonArray("worker_counts"), List.class);
-            if (workerCounts.stream().anyMatch(BatchAdministrator::checkInvalidCount))
+            List<Double> workerCounts = new Gson().<List<Double>>fromJson(benchmark.getAsJsonObject().getAsJsonArray("worker_counts"), List.class);
+            if (workerCounts.stream().anyMatch(count -> count < 1))
                 throw new IllegalArgumentException("Worker counts must be integers greater than 0");
-            benchmarkMap.put("workerCounts", workerCounts);
+            benchmarkMap.put("workerCounts", workerCounts.stream().map(count -> String.valueOf(count.intValue())).collect(Collectors.toList()));
             List<String> steps = new Gson().<List<String>>fromJson(benchmark.getAsJsonObject().getAsJsonArray("steps"), List.class);
             if (steps.stream().anyMatch(step -> extractCommand(step) == null))
                 throw new IllegalArgumentException("Steps must correspond to administrative commands (RUN_EXPERIMENT");
@@ -235,20 +235,9 @@ public final class BatchAdministrator {
         return result;
     }
 
-    private static boolean checkInvalidCount(String count) {
-        try {
-            int i = Integer.parseInt(count.toUpperCase());
-            if (i < 1)
-                return true;
-        } catch (NumberFormatException e) {
-            return true;
-        }
-        return false;
-    }
-
     private static AdministratorCommand extractCommand(String command) {
         try {
-            return AdministratorCommand.valueOf(command);
+            return AdministratorCommand.valueOf(command.toUpperCase());
         } catch (IllegalArgumentException e) {
             return null;
         }

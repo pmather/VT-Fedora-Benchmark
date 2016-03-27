@@ -121,7 +121,11 @@ public final class RemoteFileFetcher extends AbstractComponent {
             }
         }
 
-        Files.move(tempDir, localDir.resolve(String.valueOf(successfulHosts)), StandardCopyOption.REPLACE_EXISTING);
+        try {
+            Files.move(tempDir, localDir.resolve(String.valueOf(successfulHosts)), StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception ignored) {
+            System.out.println(String.format("Failed to rename temp directory to %s", successfulHosts));
+        }
     }
 
     @Override
