@@ -6,7 +6,9 @@ RABBITMQ_PASSWORD="admin"
 sudo apt-get update && apt-get install -y \
     curl \
     git \
-    ntp
+    ntp \
+    vim \
+    wget
 git clone https://DedoCibula@bitbucket.org/DedoCibula/vt-fedora-benchmark.git
 ln -s vt-fedora-benchmark/orchestrators/docker_orchestrator.py collector.py
 
