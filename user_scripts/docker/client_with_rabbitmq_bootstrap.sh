@@ -18,8 +18,11 @@ docker pull dedocibula/fedora-benchmark
 
 wget https://bootstrap.pypa.io/get-pip.py
 sudo python get-pip.py
+sudo pip install pika
 sudo pip install supervisor
 rm get-pip.py
+
+echo "127.0.0.1 ${RABBITMQ_URL}" >> /etc/hosts
 
 echo_supervisord_conf > /etc/supervisord.conf
 echo "[program:docker_orchestrator]" >> /etc/supervisord.conf

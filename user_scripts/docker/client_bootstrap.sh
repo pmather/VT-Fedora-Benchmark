@@ -17,6 +17,7 @@ docker pull dedocibula/fedora-benchmark
 
 wget https://bootstrap.pypa.io/get-pip.py
 sudo python get-pip.py
+sudo pip install pika
 sudo pip install supervisor
 rm get-pip.py
 
