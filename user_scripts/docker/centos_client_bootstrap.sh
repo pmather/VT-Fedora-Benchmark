@@ -13,6 +13,7 @@ git clone https://DedoCibula@bitbucket.org/DedoCibula/vt-fedora-benchmark.git
 ln -s vt-fedora-benchmark/orchestrators/docker_orchestrator.py collector.py
 
 curl -fsSL https://get.docker.com/ | sh
+sudo service docker start
 
 docker pull dedocibula/fedora-benchmark
 
