@@ -60,10 +60,11 @@ def run(fedora_url, remote_file_downloader, work_item_client):
         if not work_item:
             break
         file_name = work_item.strip()
+        actual_file_name = "2015" + file_name[4:]
 
         # download remote file from remote storage (see commons.py for implementations)
         download = time.time()
-        remote_file_downloader.download_from_storage(file_name)
+        remote_file_downloader.download_from_storage(actual_file_name, file_name)
         progress.append("Download," + file_name + "," + str(download) + "," + str(time.time()))
 
         # read hdf5 file

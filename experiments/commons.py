@@ -5,7 +5,7 @@ class RemoteFileDownloader(object):
     def __init__(self):
         super(RemoteFileDownloader, self).__init__()
 
-    def download_from_storage(self, filename):
+    def download_from_storage(self, filename, destination):
         raise NotImplementedError
 
 
@@ -14,8 +14,8 @@ class GoogleDriveDownloader(RemoteFileDownloader):
         super(GoogleDriveDownloader, self).__init__()
         self.url = "https://googledrive.com/host/" + google_drive_dir + "/{}"
 
-    def download_from_storage(self, filename):
-        call("wget -nv " + self.url.format(filename) + " -O " + filename, shell=True)
+    def download_from_storage(self, filename, destination):
+        call("wget -nv " + self.url.format(filename) + " -O " + destination, shell=True)
 
 
 class WorkItemClient(object):
@@ -35,7 +35,9 @@ class FileSystemClient(WorkItemClient):
 
     def get_work_item(self):
         while self.current < len(self.lines):
-            return self.lines[self.current]
+            line = self.lines[self.current]
+            self.current += 1
+            return line
 
 
 class RabbitMQClient(WorkItemClient):
