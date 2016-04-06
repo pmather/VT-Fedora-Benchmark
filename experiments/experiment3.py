@@ -53,6 +53,7 @@ def run(work_item_client):
                 multiple_sum(a)
         progress.append("Processing," + fedora_obj_url + "," + str(processing) + "," + str(time.time()))
 
+        f.close()
         os.remove(file_name)
 
     duration = str(time.time() - tic)
