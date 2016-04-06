@@ -30,7 +30,7 @@ ENV BENCHMARK_URL https://DedoCibula@bitbucket.org/DedoCibula/vt-fedora-benchmar
 ENV FITS_URL http://projects.iq.harvard.edu/files/fits/files/fits-0.9.0.zip?m=1449588471
 
 RUN git clone "$BENCHMARK_URL" vt-fedora-benchmark
-RUN cd "$BENCHMARK_HOME" && wget -q "$FITS_URL" -O fits-0.9.0.zip && unzip -q fits-0.9.0.zip && chmod +x fits-0.9.0/fits.sh
+RUN cd "$BENCHMARK_HOME" && wget -q "$FITS_URL" -O fits-0.9.0.zip && unzip -q fits-0.9.0.zip && chmod +x fits-0.9.0/fits.sh && rm fits-0.9.0.zip
 ENV PATH "$PATH:${BENCHMARK_HOME}/fits-0.9.0/"
 
 WORKDIR $BENCHMARK_HOME

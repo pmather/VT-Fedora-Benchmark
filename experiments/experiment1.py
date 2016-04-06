@@ -117,6 +117,7 @@ def run(fedora_url, remote_file_downloader, work_item_client):
                 url_file.write(object_url + "\n")
                 print file_url
 
+        f.close()
         os.remove(file_name)
         os.remove(file_name + "_fits.xml")
 
