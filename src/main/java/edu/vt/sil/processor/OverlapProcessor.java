@@ -21,7 +21,7 @@ public final class OverlapProcessor implements ResultProcessor {
 
     @Override
     public String getHeaders(Map<String, List<ExperimentResult>> results) {
-        return "VMs";
+        return "Workers";
     }
 
     @Override

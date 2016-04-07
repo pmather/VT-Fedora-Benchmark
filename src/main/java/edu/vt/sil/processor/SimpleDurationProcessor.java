@@ -18,7 +18,7 @@ public final class SimpleDurationProcessor implements ResultProcessor {
 
     @Override
     public String getHeaders(Map<String, List<ExperimentResult>> results) {
-        return "VMs,Min,Average,Max";
+        return "Workers,Min,Average,Max";
     }
 
     @Override
