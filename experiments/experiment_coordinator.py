@@ -101,4 +101,6 @@ def main(rabbitmq_host, rabbitmq_username, rabbitmq_password, worker_id, control
 
 if __name__ == "__main__":
     main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6],
-         sys.argv[7] if len(sys.argv) > 7 else None, sys.argv[8] if len(sys.argv) > 8 else None)
+         sys.argv[7] if len(sys.argv) > 7 and sys.argv[7] != "None" else None,
+         sys.argv[8] if len(sys.argv) > 8 and sys.argv[7] != "None" else None,
+         sys.argv[9] if len(sys.argv) > 9 else None)
