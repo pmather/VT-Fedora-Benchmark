@@ -11,7 +11,7 @@ def delete_fedora_object(fedora_url):
     c.close()
 
 
-def main(fedora_urls):
+def main(fedora_urls, results_destination=None):
     with open(fedora_urls) as f:
         lines = f.readlines()
 
@@ -23,7 +23,7 @@ def main(fedora_urls):
         delete_fedora_object(fedora_url + "/fcr:tombstone")
         print "Deletion successful"
 
-    for file in os.listdir("."):
+    for file in os.listdir(results_destination or "."):
         if file.endswith(".csv"):
             os.remove(file)
     os.remove(fedora_urls)

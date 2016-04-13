@@ -45,8 +45,8 @@ def create_fedora_binary(file_path, fedora_url):
     return content
 
 
-def run(fedora_url, remote_file_downloader, work_item_client):
-    output_file = open("experiment1_{}_results.csv".format(datetime.date.today()), "a")
+def run(fedora_url, remote_file_downloader, work_item_client, results_destination=None):
+    output_file = open(os.path.join(results_destination or ".", "experiment1_{}_results.csv".format(datetime.date.today())), "a")
     url_file = open("fedoraurls.txt", "a")
 
     progress = []

@@ -19,8 +19,8 @@ def multiple_sum(array):
     return out
 
 
-def run(work_item_client):
-    output_file = open("experiment3_{}_results.csv".format(datetime.date.today()), "a")
+def run(work_item_client, results_destination=None):
+    output_file = open(os.path.join(results_destination or ".", "experiment3_{}_results.csv".format(datetime.date.today())), "a")
 
     progress = []
 

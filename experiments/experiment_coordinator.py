@@ -9,6 +9,7 @@ connection = None
 work_queue_name = None
 host_id = None
 temp_queue_name = None
+results_destination = None
 
 
 def handle_control_message(ch, method, props, body):
@@ -26,28 +27,28 @@ def handle_control_message(ch, method, props, body):
             downloader = GoogleDriveDownloader(props.headers["storageFolder"])
             client = RabbitMQClient(connection, work_queue_name)
             print "Starting experiment 1"
-            experiment1.run(fedora_url, downloader, client)
+            experiment1.run(fedora_url, downloader, client, results_destination)
             print "Finished running experiment 1. Acknowledging success"
             acknowledge(ch, props.reply_to, props.correlation_id)
         elif body == "EXPERIMENT2":
             import experiment2
             client = RabbitMQClient(connection, work_queue_name)
             print "Starting experiment 2"
-            experiment2.run(client)
+            experiment2.run(client, results_destination)
             print "Finished running experiment 2. Acknowledging success"
             acknowledge(ch, props.reply_to, props.correlation_id)
         elif body == "EXPERIMENT3":
             import experiment3
             client = RabbitMQClient(connection, work_queue_name)
             print "Starting experiment 3"
-            experiment3.run(client)
+            experiment3.run(client, results_destination)
             print "Finished running experiment 3. Acknowledging success"
             acknowledge(ch, props.reply_to, props.correlation_id)
         elif body == "SHUTDOWN":
             if os.path.isfile("fedoraurls.txt"):
                 import clear_all
                 print "Performing cleanup"
-                clear_all.main("fedoraurls.txt")
+                clear_all.main("fedoraurls.txt", results_destination)
             print "Disconnecting from control topic"
             acknowledge(ch, props.reply_to, props.correlation_id)
             ch.queue_delete(queue=temp_queue_name)
@@ -67,7 +68,7 @@ def acknowledge(ch, reply_to, correlation_id):
 
 
 def main(rabbitmq_host, rabbitmq_username, rabbitmq_password, worker_id, control_topic, work_queue,
-         acknowledge_queue=None, correlation_id=None):
+         acknowledge_queue=None, correlation_id=None, results_dest=None):
     global connection
     global host_id
     global work_queue_name
@@ -90,6 +91,10 @@ def main(rabbitmq_host, rabbitmq_username, rabbitmq_password, worker_id, control
     channel.basic_consume(handle_control_message, queue=temp_queue_name, no_ack=True)
     if acknowledge_queue and correlation_id:
         acknowledge(channel, acknowledge_queue, correlation_id)
+
+    global results_destination
+    if results_dest and os.path.exists(results_dest):
+        results_destination = results_dest
 
     channel.start_consuming()
 
