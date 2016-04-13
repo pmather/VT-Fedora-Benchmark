@@ -20,7 +20,9 @@ def multiple_sum(array):
 
 
 def run(work_item_client, results_destination=None):
-    output_file = open(os.path.join(results_destination or ".", "experiment3_{}_results.csv".format(datetime.date.today())), "a")
+    output_file = open(
+        os.path.join(results_destination if (results_destination and os.path.exists(results_destination)) else ".",
+                     "experiment3_{}_results.csv".format(datetime.date.today())), "a")
 
     progress = []
 

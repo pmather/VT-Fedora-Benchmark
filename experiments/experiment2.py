@@ -44,7 +44,9 @@ def sha1_of_file(file_path):
 
 
 def run(work_item_client, results_destination=None):
-    output_file = open(os.path.join(results_destination or ".", "experiment2_{}_results.csv".format(datetime.date.today())), "a")
+    output_file = open(
+        os.path.join(results_destination if (results_destination and os.path.exists(results_destination)) else ".",
+                     "experiment2_{}_results.csv".format(datetime.date.today())), "a")
 
     progress = []
 
@@ -84,7 +86,7 @@ def run(work_item_client, results_destination=None):
 
         update_str = "PREFIX dc: <http://purl.org/dc/elements/1.1/> INSERT { <> dc:provenance \"" + sha_result + "\" . } WHERE { } "
         progress.append(
-                "Processing," + fedora_obj_url + "," + str(processing) + "," + str(time.time() - download_elapsed))
+            "Processing," + fedora_obj_url + "," + str(processing) + "," + str(time.time() - download_elapsed))
 
         ingestion = time.time()
         update_fedora_binary(update_str, fedora_obj_url)
@@ -104,5 +106,5 @@ if __name__ == "__main__":
     fedora_urls_filename = sys.argv[1]
 
     from commons import FileSystemClient
-    
+
     run(FileSystemClient(fedora_urls_filename))

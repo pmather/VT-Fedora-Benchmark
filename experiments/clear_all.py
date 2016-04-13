@@ -23,7 +23,8 @@ def main(fedora_urls, results_destination=None):
         delete_fedora_object(fedora_url + "/fcr:tombstone")
         print "Deletion successful"
 
-    for file in os.listdir(results_destination or "."):
+    for file in os.listdir(
+            results_destination if (results_destination and os.path.exists(results_destination)) else "."):
         if file.endswith(".csv"):
             os.remove(file)
     os.remove(fedora_urls)

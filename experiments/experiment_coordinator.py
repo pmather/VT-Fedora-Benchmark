@@ -77,12 +77,10 @@ def main(rabbitmq_host, rabbitmq_username, rabbitmq_password, worker_id, control
 
     host_id = worker_id
     work_queue_name = work_queue
+    results_destination = results_dest
 
     credentials = pika.PlainCredentials(rabbitmq_username, rabbitmq_password)
     connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host, credentials=credentials))
-
-    if results_dest and os.path.exists(results_dest):
-        results_destination = results_dest
 
     channel = connection.channel()
     channel.exchange_declare(exchange=control_topic, type='fanout')
