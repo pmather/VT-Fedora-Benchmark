@@ -31,10 +31,10 @@ class RktManager(orchestrator.WorkerManager):
                 os.makedirs(base_path)
             with open(os.path.join(base_path, "experiment.out"), "w") as f, open(os.devnull, 'w') as fnull:
                 self.opened_processes.append(
-                    Popen(["sudo", "rkt", "run", "--volume", "results,kind=host,source={},readOnly=false",
-                           "registry-1.docker.io/dedocibula/fedora-benchmark:latest", "--mount",
-                           "volume=results,target=/vt-fedora-benchmark/experiments/{}",
-                           "--exec", "python", "--", "experiment_coordinator.py", base_path, self.volume,
+                    Popen(["sudo", "rkt", "run", "--insecure-options=image", "--volume", "results,kind=host,source=" + base_path + ",readOnly=false",
+                           "docker://dedocibula/fedora-benchmark", "--mount",
+                           "volume=results,target=" + self.volume,
+                           "--exec", "python", "--", "experiment_coordinator.py",
                            self.rabbitmq_host, self.rabbitmq_username,
                            self.rabbitmq_password, id, control_topic_name, work_queue_name, acknowledge_queue,
                            correlation_id, self.volume],

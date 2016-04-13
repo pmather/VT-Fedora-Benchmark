@@ -73,12 +73,16 @@ def main(rabbitmq_host, rabbitmq_username, rabbitmq_password, worker_id, control
     global host_id
     global work_queue_name
     global temp_queue_name
+    global results_destination
 
     host_id = worker_id
     work_queue_name = work_queue
 
     credentials = pika.PlainCredentials(rabbitmq_username, rabbitmq_password)
     connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host, credentials=credentials))
+
+    if results_dest and os.path.exists(results_dest):
+        results_destination = results_dest
 
     channel = connection.channel()
     channel.exchange_declare(exchange=control_topic, type='fanout')
@@ -91,10 +95,6 @@ def main(rabbitmq_host, rabbitmq_username, rabbitmq_password, worker_id, control
     channel.basic_consume(handle_control_message, queue=temp_queue_name, no_ack=True)
     if acknowledge_queue and correlation_id:
         acknowledge(channel, acknowledge_queue, correlation_id)
-
-    global results_destination
-    if results_dest and os.path.exists(results_dest):
-        results_destination = results_dest
 
     channel.start_consuming()
 
