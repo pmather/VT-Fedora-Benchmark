@@ -6,11 +6,12 @@ from subprocess import Popen
 
 
 class RktManager(orchestrator.WorkerManager):
-    def __init__(self, host_uid, rabbitmq_host, rabbitmq_username, rabbitmq_password, volume):
+    def __init__(self, host_uid, rabbitmq_host, rabbitmq_username, rabbitmq_password, volume, with_host_network):
         super(RktManager, self).__init__(host_uid, rabbitmq_host, rabbitmq_username, rabbitmq_password)
         self.result_directories = open(orchestrator.WorkerManager.RUNNING_WORKERS_FILENAME, "w+")
         self.project_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         self.volume = volume
+        self.with_host_network = with_host_network
         self.opened_processes = []
 
     @staticmethod
@@ -31,7 +32,8 @@ class RktManager(orchestrator.WorkerManager):
                 os.makedirs(base_path)
             with open(os.path.join(base_path, "experiment.out"), "w") as f, open(os.devnull, 'w') as fnull:
                 self.opened_processes.append(
-                    Popen(["sudo", "rkt", "run", "--insecure-options=image", "--volume", "results,kind=host,source=" + base_path + ",readOnly=false",
+                    Popen(["sudo", "rkt", "run", "--insecure-options=image", "--net=host" if self.with_host_network else "",
+                           "--volume", "results,kind=host,source=" + base_path + ",readOnly=false",
                            "docker://dedocibula/fedora-benchmark", "--mount",
                            "volume=results,target=" + self.volume,
                            "--exec", "python", "--", "experiment_coordinator.py",
@@ -54,7 +56,7 @@ def main():
     command = sys.argv[1]
 
     if command == "start_with":
-        orchestrator.start_with(RktManager(str(uuid.uuid4()), sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5]))
+        orchestrator.start_with(RktManager(str(uuid.uuid4()), sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6] == "True"))
     elif command == "fetch_results":
         RktManager.fetch_results()
     else:
