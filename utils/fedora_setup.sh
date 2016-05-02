@@ -31,7 +31,7 @@ sudo sed -i "s:\${HOME}:${HOME}:" /etc/default/tomcat7
 
 cd
 curl -s https://api.github.com/repos/fcrepo4/fcrepo4/releases \
-	| grep browser_download_url \
+	| grep browser_download_url.*.war \
 	| head -n 1 \
 	| cut -d '"' -f 4 \
 	| xargs wget -O fedora.war
