@@ -32,15 +32,15 @@ class RktManager(orchestrator.WorkerManager):
                 os.makedirs(base_path)
             with open(os.path.join(base_path, "experiment.out"), "w") as f, open(os.devnull, 'w') as fnull:
                 self.opened_processes.append(
-                    Popen(["sudo", "rkt", "run", "--insecure-options=image", "--net=host" if self.with_host_network else "",
-                           "--volume", "results,kind=host,source=" + base_path + ",readOnly=false",
-                           "docker://dedocibula/fedora-benchmark", "--mount",
-                           "volume=results,target=" + self.volume,
-                           "--exec", "python", "--", "experiment_coordinator.py",
-                           self.rabbitmq_host, self.rabbitmq_username,
-                           self.rabbitmq_password, id, control_topic_name, work_queue_name, acknowledge_queue,
-                           correlation_id, self.volume],
-                          cwd=base_path, stdout=f, stderr=fnull))
+                    Popen(" ".join(["sudo", "rkt", "run", "--insecure-options=image", "--net=host" if self.with_host_network else "",
+                                    "--volume", "results,kind=host,source=" + base_path + ",readOnly=false",
+                                    "docker://dedocibula/fedora-benchmark", "--mount",
+                                    "volume=results,target=" + self.volume,
+                                    "--exec", "python", "--", "experiment_coordinator.py",
+                                    self.rabbitmq_host, self.rabbitmq_username,
+                                    self.rabbitmq_password, id, control_topic_name, work_queue_name, acknowledge_queue,
+                                    correlation_id, self.volume]),
+                          cwd=base_path, stdout=f, stderr=fnull, shell=True))
             self.result_directories.write(base_path + "\n")
         self.result_directories.flush()
 
