@@ -2,7 +2,7 @@ import orchestrator
 import os
 import sys
 import uuid
-from subprocess import Popen
+from subprocess import Popen, call
 
 
 class RktManager(orchestrator.WorkerManager):
@@ -47,6 +47,7 @@ class RktManager(orchestrator.WorkerManager):
     def stop_workers(self):
         for proc in self.opened_processes:
             proc.wait()
+        call("sudo rkt gc --grace-period=1m")
         self.opened_processes = []
         self.result_directories.seek(0)
         self.result_directories.truncate()
