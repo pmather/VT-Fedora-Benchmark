@@ -1,7 +1,7 @@
 #!/bin/bash
 sudo add-apt-repository ppa:openjdk-r/ppa -y
 
-sudo apt-get update && apt-get install -y \
+sudo apt-get update && sudo apt-get install -y \
 	build-essential \
 	curl \
 	screen \
@@ -12,7 +12,7 @@ sudo apt-get update && apt-get install -y \
 	htop tree zsh fish
 
 sudo apt-get update -y
-sudo apt-get upgrade -y
+sudo env DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
 
 sudo apt-get install openjdk-8-jdk -y
 sudo apt-get install maven -y
