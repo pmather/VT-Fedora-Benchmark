@@ -3,7 +3,7 @@ RABBITMQ_URL="localhost"
 RABBITMQ_USERNAME="admin"
 RABBITMQ_PASSWORD="admin"
 
-sudo apt-get update && apt-get install -y \
+sudo apt-get upgrade && sudo apt-get update && sudo apt-get install -y \
     curl \
     git \
     ntp \

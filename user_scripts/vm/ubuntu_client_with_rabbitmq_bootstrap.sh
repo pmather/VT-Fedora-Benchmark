@@ -5,7 +5,7 @@ RABBITMQ_PASSWORD="admin"
 
 wget https://www.rabbitmq.com/rabbitmq-signing-key-public.asc
 sudo apt-key add rabbitmq-signing-key-public.asc
-sudo apt-get update
+sudo apt-get upgrade && supo apt-get update
 sudo apt-get install rabbitmq-server -y
 sudo service rabbitmq-server start
 sudo rabbitmq-plugins enable rabbitmq_management
@@ -16,7 +16,7 @@ sudo rabbitmqctl delete_user guest
 sudo service rabbitmq-server restart
 rm rabbitmq-signing-key-public.asc
 
-sudo apt-get install -y git
+sudo apt-get upgrade && sudo apt-get update && sudo apt-get install -y git
 git clone https://DedoCibula@bitbucket.org/DedoCibula/vt-fedora-benchmark.git
 vt-fedora-benchmark/utils/client_setup.sh
 ln -s vt-fedora-benchmark/orchestrators/process_orchestrator.py collector.py
