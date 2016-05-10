@@ -18,6 +18,15 @@ class GoogleDriveDownloader(RemoteFileDownloader):
         call("wget -nv " + self.url.format(filename) + " -O " + destination, shell=True)
 
 
+class S3Downloader(RemoteFileDownloader):
+    def __init__(self, s3_bucket):
+        super(S3Downloader, self).__init__()
+        self.url = "https://s3.amazonaws.com/" + s3_bucket + "/{}"
+
+    def download_from_storage(self, filename, destination):
+        call("wget -nv " + self.url.format(filename) + " -O " + destination, shell=True)
+
+
 class WorkItemClient(object):
     def __init__(self):
         super(WorkItemClient, self).__init__()

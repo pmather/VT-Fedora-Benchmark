@@ -1,6 +1,7 @@
 package edu.vt.sil.components;
 
 import edu.vt.sil.administrator.AdministratorCommand;
+import edu.vt.sil.administrator.StorageType;
 import edu.vt.sil.messaging.RabbitMQCommand;
 import edu.vt.sil.messaging.RabbitMQProducer;
 
@@ -25,6 +26,7 @@ public final class ExperimentOrchestrator extends AbstractComponent {
     private AdministratorCommand command;
     private List<Integer> workerCounts;
     private URL fedoraUrl;
+    private StorageType storageType;
     private String storageFolder;
     private List<String> hdf5WorkItems;
 
@@ -60,19 +62,21 @@ public final class ExperimentOrchestrator extends AbstractComponent {
             case RUN_EXPERIMENT1:
                 if (activeWorkers.isEmpty())
                     throw new IllegalArgumentException("There are no active workers. Start workers first");
-                if (arguments.length != 3)
+                if (arguments.length != 4)
                     throw new IllegalArgumentException(String.format("Invalid number of parameters. " +
-                            "Expected: 3 - Received: %s", arguments.length));
+                            "Expected: 4 - Received: %s", arguments.length));
 
                 fedoraUrl = new URL(arguments[0]);
                 // validation
                 fedoraUrl.toURI();
 
-                storageFolder = arguments[1];
+                storageType = StorageType.valueOf(arguments[1].toUpperCase());
+
+                storageFolder = arguments[2];
                 if (storageFolder == null || storageFolder.isEmpty())
                     throw new IllegalArgumentException("Cannot use null/empty storage folder");
 
-                hdf5WorkItems = prepareHDF5WorkItems(arguments[2], null);
+                hdf5WorkItems = prepareHDF5WorkItems(arguments[3], null);
                 break;
             case RUN_EXPERIMENT2:
             case RUN_EXPERIMENT3:
@@ -107,6 +111,7 @@ public final class ExperimentOrchestrator extends AbstractComponent {
             case RUN_EXPERIMENT1:
                 Map<String, Object> headers = new HashMap<>();
                 headers.put("fedoraUrl", fedoraUrl.toString());
+                headers.put("storageType", storageType.toString());
                 headers.put("storageFolder", storageFolder);
                 executeExperiment(RabbitMQCommand.EXPERIMENT1, headers);
                 break;
@@ -129,7 +134,7 @@ public final class ExperimentOrchestrator extends AbstractComponent {
             case START_WORKERS:
                 return "<comma-separated worker count>";
             case RUN_EXPERIMENT1:
-                return "<fedora url> <external storage folder (GDrive)> <input file (HDF5 file names)>";
+                return "<fedora url> <external storage type (Google_Drive, S3)> <external storage folder> <input file (HDF5 file names)>";
             case RUN_EXPERIMENT2:
             case RUN_EXPERIMENT3:
                 return "<fedora url> <input file (HDF5 file names)>";

@@ -35,6 +35,7 @@ public final class BatchAdministrator {
             System.out.println("Extracting properties...");
             String fedoraUrl = extractFedoraUrl(properties);
             String dataset = extractDataSetInputFile(properties);
+            String storageType = extractExternalStorageType(properties);
             String storageDirectory = extractExternalStorageDirectory(properties);
             CommandHandler handler = createCommandHandler(producer, properties);
             String workerIps = extractWorkersPublicIps(properties);
@@ -55,7 +56,7 @@ public final class BatchAdministrator {
                     //noinspection ConstantConditions
                     switch (command) {
                         case RUN_EXPERIMENT1:
-                            handler.handleCommand(AdministratorCommand.RUN_EXPERIMENT1, fedoraUrl, storageDirectory, dataset);
+                            handler.handleCommand(AdministratorCommand.RUN_EXPERIMENT1, fedoraUrl, storageType, storageDirectory, dataset);
                             break;
                         case RUN_EXPERIMENT2:
                             handler.handleCommand(AdministratorCommand.RUN_EXPERIMENT2, fedoraUrl, dataset);
@@ -143,6 +144,18 @@ public final class BatchAdministrator {
 
         System.out.println(String.format("Dataset input file: %s", dataset));
         return dataset;
+    }
+
+    private static String extractExternalStorageType(Properties properties) {
+        String storageType = properties.getProperty("external-storage-type");
+        if (storageType == null || storageType.isEmpty() ||
+                !Arrays.stream(StorageType.values()).map(Enum::toString).anyMatch(t -> t.equals(storageType.toUpperCase()))) {
+            System.out.println("Cannot use null/empty external storage type");
+            System.exit(-1);
+        }
+
+        System.out.println(String.format("External storage type: %s", storageType));
+        return storageType;
     }
 
     private static String extractExternalStorageDirectory(Properties properties) {

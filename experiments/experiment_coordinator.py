@@ -3,7 +3,7 @@ import sys
 import traceback
 import os
 
-from commons import RabbitMQClient, GoogleDriveDownloader
+from commons import RabbitMQClient, GoogleDriveDownloader, S3Downloader
 
 connection = None
 work_queue_name = None
@@ -19,12 +19,13 @@ def handle_control_message(ch, method, props, body):
     try:
         print "Received command: " + body + " , parameters: " + str(props.headers)
         if body == "EXPERIMENT1":
-            if not props.headers and ("fedoraUrl" not in props.headers or "storageFolder" not in props.headers):
-                print "Missing necessary headers (controlTopicName and workQueueName)"
+            if not props.headers and (
+                                "fedoraUrl" not in props.headers or "storageType" not in props.headers or "storageFolder" not in props.headers):
+                print "Missing necessary headers (fedoraUrl, storageType, storageFolder)"
                 return
             import experiment1
             fedora_url = props.headers["fedoraUrl"]
-            downloader = GoogleDriveDownloader(props.headers["storageFolder"])
+            downloader = create_remote_downloader(props.headers["storageType"], props.headers["storageFolder"])
             client = RabbitMQClient(connection, work_queue_name)
             print "Starting experiment 1"
             experiment1.run(fedora_url, downloader, client, results_destination)
@@ -65,6 +66,15 @@ def acknowledge(ch, reply_to, correlation_id):
                      routing_key=reply_to,
                      properties=pika.BasicProperties(correlation_id=correlation_id),
                      body=str(host_id))
+
+
+def create_remote_downloader(storage_type, storage_folder):
+    if storage_type == "GOOGLE_DRIVE":
+        return GoogleDriveDownloader(storage_folder)
+    elif storage_type == "S3":
+        return S3Downloader(storage_folder)
+    else:
+        raise ValueError("Unexpected storage type: " + storage_type)
 
 
 def main(rabbitmq_host, rabbitmq_username, rabbitmq_password, worker_id, control_topic, work_queue,
