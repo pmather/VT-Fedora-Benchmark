@@ -26,6 +26,8 @@ final class CommandHandler {
         mappings.put(AdministratorCommand.START_WORKERS, orchestrator);
         mappings.put(AdministratorCommand.RUN_FULL_INGESTION, orchestrator);
         mappings.put(AdministratorCommand.RUN_FULL_RETRIEVAL, orchestrator);
+        mappings.put(AdministratorCommand.RUN_PROXY_INGESTION, orchestrator);
+        mappings.put(AdministratorCommand.RUN_PROXY_RETRIEVAL, orchestrator);
         mappings.put(AdministratorCommand.STOP_WORKERS, orchestrator);
 
         mappings.put(AdministratorCommand.FETCH_RESULTS, new RemoteFileFetcher(remoteUserName, privateKeyName));

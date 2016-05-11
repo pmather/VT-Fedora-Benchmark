@@ -60,6 +60,7 @@ public final class ExperimentOrchestrator extends AbstractComponent {
                 }
                 break;
             case RUN_FULL_INGESTION:
+            case RUN_PROXY_INGESTION:
                 if (activeWorkers.isEmpty())
                     throw new IllegalArgumentException("There are no active workers. Start workers first");
                 if (arguments.length != 4)
@@ -79,6 +80,7 @@ public final class ExperimentOrchestrator extends AbstractComponent {
                 hdf5WorkItems = prepareHDF5WorkItems(arguments[3], null);
                 break;
             case RUN_FULL_RETRIEVAL:
+            case RUN_PROXY_RETRIEVAL:
                 if (activeWorkers.isEmpty())
                     throw new IllegalArgumentException("There are no active workers. Start workers first");
                 if (arguments.length != 2)
@@ -108,14 +110,16 @@ public final class ExperimentOrchestrator extends AbstractComponent {
                     activeWorkers.addAll(producer.addWorkers(count));
                 break;
             case RUN_FULL_INGESTION:
+            case RUN_PROXY_INGESTION:
                 Map<String, Object> headers = new HashMap<>();
                 headers.put("fedoraUrl", fedoraUrl.toString());
                 headers.put("storageType", storageType.toString());
                 headers.put("storageFolder", storageFolder);
-                executeExperiment(RabbitMQCommand.FULL_INGESTION, headers);
+                executeExperiment(command == AdministratorCommand.RUN_FULL_INGESTION ? RabbitMQCommand.FULL_INGESTION : RabbitMQCommand.PROXY_INGESTION, headers);
                 break;
             case RUN_FULL_RETRIEVAL:
-                executeExperiment(RabbitMQCommand.FULL_RETRIEVAL, null);
+            case RUN_PROXY_RETRIEVAL:
+                executeExperiment(command == AdministratorCommand.RUN_FULL_RETRIEVAL ? RabbitMQCommand.FULL_RETRIEVAL : RabbitMQCommand.PROXY_RETRIEVAL, null);
                 break;
             case STOP_WORKERS:
                 activeWorkers.removeAll(producer.sendControlMessage(RabbitMQCommand.SHUTDOWN, activeWorkers.size()));
@@ -130,8 +134,10 @@ public final class ExperimentOrchestrator extends AbstractComponent {
             case START_WORKERS:
                 return "<comma-separated worker count>";
             case RUN_FULL_INGESTION:
+            case RUN_PROXY_INGESTION:
                 return "<fedora url> <external storage type (Google_Drive, S3)> <external storage folder> <input file (HDF5 file names)>";
             case RUN_FULL_RETRIEVAL:
+            case RUN_PROXY_RETRIEVAL:
                 return "<fedora url> <input file (HDF5 file names)>";
             case STOP_WORKERS:
                 return "";

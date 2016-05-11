@@ -17,25 +17,33 @@ def handle_control_message(ch, method, props, body):
         return
     try:
         print "Received command: " + body + " , parameters: " + str(props.headers)
-        if body == "FULL_INGESTION":
+        if body == "FULL_INGESTION" or body == "PROXY_INGESTION":
             if not props.headers and (
                                 "fedoraUrl" not in props.headers or "storageType" not in props.headers or "storageFolder" not in props.headers):
                 print "Missing necessary headers (fedoraUrl, storageType, storageFolder)"
                 return
-            import full_ingestion
             fedora_url = props.headers["fedoraUrl"]
             downloader = create_remote_downloader(props.headers["storageType"], props.headers["storageFolder"])
             client = RabbitMQClient(connection, work_queue_name)
-            print "Starting experiment 1"
-            full_ingestion.run(fedora_url, downloader, client)
-            print "Finished running experiment 1. Acknowledging success"
+            print "Starting " + body
+            if body == "FULL_INGESTION":
+                import full_ingestion
+                full_ingestion.run(fedora_url, downloader, client)
+            else:
+                import proxy_ingestion
+                proxy_ingestion.run(fedora_url, downloader, client)
+            print "Finished running " + body + ". Acknowledging success"
             acknowledge(ch, props.reply_to, props.correlation_id)
-        elif body == "FULL_RETRIEVAL":
-            import full_retrieval
+        elif body == "FULL_RETRIEVAL" or body == "PROXY_RETRIEVAL":
             client = RabbitMQClient(connection, work_queue_name)
-            print "Starting experiment 2"
-            full_retrieval.run(client)
-            print "Finished running experiment 2. Acknowledging success"
+            print "Starting " + body
+            if body == "FULL_RETRIEVAL":
+                import full_retrieval
+                full_retrieval.run(client)
+            else:
+                import proxy_retrieval
+                proxy_retrieval.run(client)
+            print "Finished running " + body + ". Acknowledging success"
             acknowledge(ch, props.reply_to, props.correlation_id)
         elif body == "SHUTDOWN":
             if os.path.isfile("fedoraurls.txt"):

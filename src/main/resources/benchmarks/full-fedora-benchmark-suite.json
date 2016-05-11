@@ -1,0 +1,40 @@
+{
+	"benchmarks": [
+		{
+			"worker_counts": [ 1 ],
+			"steps": [ "full_ingestion", "full_retrieval" ]
+		},
+		{
+			"worker_counts": [ 1, 1 ],
+			"steps": [ "full_ingestion", "full_retrieval" ]
+		},
+		{
+			"worker_counts": [ 1, 1, 1 ],
+			"steps": [ "full_ingestion", "full_retrieval" ]
+		},
+		{
+			"worker_counts": [ 1, 1, 1, 1 ],
+			"steps": [ "full_ingestion", "full_retrieval" ]
+		},
+		{
+			"worker_counts": [ 1, 1, 1, 1, 1 ],
+			"steps": [ "full_ingestion", "full_retrieval" ]
+		},
+		{
+			"worker_counts": [ 1, 1, 1, 1, 1, 1 ],
+			"steps": [ "full_ingestion", "full_retrieval" ]
+		},
+		{
+			"worker_counts": [ 1, 1, 1, 1, 1, 1, 1 ],
+			"steps": [ "full_ingestion", "full_retrieval" ]
+		},
+		{
+			"worker_counts": [ 1, 1, 1, 1, 1, 1, 1, 1 ],
+			"steps": [ "full_ingestion", "full_retrieval" ]
+		},
+		{
+			"worker_counts": [ 1, 1, 1, 1, 1, 1, 1, 1, 1 ],
+			"steps": [ "full_ingestion", "full_retrieval" ]
+		}
+	]
+}

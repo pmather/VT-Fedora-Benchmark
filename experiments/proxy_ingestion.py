@@ -24,7 +24,7 @@ def create_fedora_object(rdf_data, fedora_url, filename):
 
 
 def run(fedora_url, remote_file_downloader, work_item_client):
-    output_file = open("experiment_storage_{}_results.csv".format(datetime.date.today()), "a")
+    output_file = open("experiment_proxy_ingestion_{}_results.csv".format(datetime.date.today()), "a")
     url_file = open("fedoraurls.txt", "a")
 
     progress = []

@@ -61,6 +61,12 @@ public final class BatchAdministrator {
                         case RUN_FULL_RETRIEVAL:
                             handler.handleCommand(AdministratorCommand.RUN_FULL_RETRIEVAL, fedoraUrl, dataset);
                             break;
+                        case RUN_PROXY_INGESTION:
+                            handler.handleCommand(AdministratorCommand.RUN_PROXY_INGESTION, fedoraUrl, storageType, storageDirectory, dataset);
+                            break;
+                        case RUN_PROXY_RETRIEVAL:
+                            handler.handleCommand(AdministratorCommand.RUN_PROXY_RETRIEVAL, fedoraUrl, dataset);
+                            break;
                         default:
                             System.out.println(String.format("Skipping illegal command: %s", command));
                     }
@@ -72,6 +78,8 @@ public final class BatchAdministrator {
 
             handler.handleCommand(AdministratorCommand.PROCESS_RESULTS, localResultsDirectory, RabbitMQCommand.FULL_INGESTION.name().toLowerCase());
             handler.handleCommand(AdministratorCommand.PROCESS_RESULTS, localResultsDirectory, RabbitMQCommand.FULL_RETRIEVAL.name().toLowerCase());
+            handler.handleCommand(AdministratorCommand.PROCESS_RESULTS, localResultsDirectory, RabbitMQCommand.PROXY_INGESTION.name().toLowerCase());
+            handler.handleCommand(AdministratorCommand.PROCESS_RESULTS, localResultsDirectory, RabbitMQCommand.PROXY_RETRIEVAL.name().toLowerCase());
 
             System.out.println("======================================================");
             System.out.println("FINISHING BENCHMARK...");

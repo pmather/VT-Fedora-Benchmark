@@ -8,5 +8,7 @@ public enum RabbitMQCommand {
     ADD_WORKERS,
     FULL_INGESTION,
     FULL_RETRIEVAL,
+    PROXY_INGESTION,
+    PROXY_RETRIEVAL,
     SHUTDOWN
 }
