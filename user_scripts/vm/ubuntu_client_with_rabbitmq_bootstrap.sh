@@ -17,7 +17,7 @@ sudo service rabbitmq-server restart
 rm rabbitmq-signing-key-public.asc
 
 sudo apt-get upgrade && sudo apt-get update && sudo apt-get install -y git
-git clone https://DedoCibula@bitbucket.org/DedoCibula/vt-fedora-benchmark.git
+git clone https://github.com/VTUL/VT-Fedora-Benchmark.git vt-fedora-benchmark
 vt-fedora-benchmark/utils/client_setup.sh
 ln -s vt-fedora-benchmark/orchestrators/process_orchestrator.py collector.py
 
