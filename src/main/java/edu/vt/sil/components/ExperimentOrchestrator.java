@@ -59,7 +59,7 @@ public final class ExperimentOrchestrator extends AbstractComponent {
                     workerCounts.add(workerCount);
                 }
                 break;
-            case RUN_EXPERIMENT1:
+            case RUN_FULL_INGESTION:
                 if (activeWorkers.isEmpty())
                     throw new IllegalArgumentException("There are no active workers. Start workers first");
                 if (arguments.length != 4)
@@ -78,15 +78,14 @@ public final class ExperimentOrchestrator extends AbstractComponent {
 
                 hdf5WorkItems = prepareHDF5WorkItems(arguments[3], null);
                 break;
-            case RUN_EXPERIMENT2:
-            case RUN_EXPERIMENT3:
+            case RUN_FULL_RETRIEVAL:
                 if (activeWorkers.isEmpty())
                     throw new IllegalArgumentException("There are no active workers. Start workers first");
                 if (arguments.length != 2)
                     throw new IllegalArgumentException(String.format("Invalid number of parameters. " +
                             "Expected: 2 - Received: %s", arguments.length));
-                if (!executedCommands.contains(RabbitMQCommand.EXPERIMENT1))
-                    throw new IllegalArgumentException(String.format("%s depends on experiment1. Run it first", command));
+                if (!executedCommands.contains(RabbitMQCommand.FULL_INGESTION))
+                    throw new IllegalArgumentException(String.format("%s depends on ingestion. Run it first", command));
 
                 URL fedoraUrl = new URL(arguments[0]);
                 // validation
@@ -108,18 +107,15 @@ public final class ExperimentOrchestrator extends AbstractComponent {
                 for (Integer count : workerCounts)
                     activeWorkers.addAll(producer.addWorkers(count));
                 break;
-            case RUN_EXPERIMENT1:
+            case RUN_FULL_INGESTION:
                 Map<String, Object> headers = new HashMap<>();
                 headers.put("fedoraUrl", fedoraUrl.toString());
                 headers.put("storageType", storageType.toString());
                 headers.put("storageFolder", storageFolder);
-                executeExperiment(RabbitMQCommand.EXPERIMENT1, headers);
+                executeExperiment(RabbitMQCommand.FULL_INGESTION, headers);
                 break;
-            case RUN_EXPERIMENT2:
-                executeExperiment(RabbitMQCommand.EXPERIMENT2, null);
-                break;
-            case RUN_EXPERIMENT3:
-                executeExperiment(RabbitMQCommand.EXPERIMENT3, null);
+            case RUN_FULL_RETRIEVAL:
+                executeExperiment(RabbitMQCommand.FULL_RETRIEVAL, null);
                 break;
             case STOP_WORKERS:
                 activeWorkers.removeAll(producer.sendControlMessage(RabbitMQCommand.SHUTDOWN, activeWorkers.size()));
@@ -133,10 +129,9 @@ public final class ExperimentOrchestrator extends AbstractComponent {
         switch (command) {
             case START_WORKERS:
                 return "<comma-separated worker count>";
-            case RUN_EXPERIMENT1:
+            case RUN_FULL_INGESTION:
                 return "<fedora url> <external storage type (Google_Drive, S3)> <external storage folder> <input file (HDF5 file names)>";
-            case RUN_EXPERIMENT2:
-            case RUN_EXPERIMENT3:
+            case RUN_FULL_RETRIEVAL:
                 return "<fedora url> <input file (HDF5 file names)>";
             case STOP_WORKERS:
                 return "";

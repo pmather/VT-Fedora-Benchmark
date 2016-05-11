@@ -6,8 +6,7 @@ package edu.vt.sil.messaging;
  */
 public enum RabbitMQCommand {
     ADD_WORKERS,
-    EXPERIMENT1,
-    EXPERIMENT2,
-    EXPERIMENT3,
+    FULL_INGESTION,
+    FULL_RETRIEVAL,
     SHUTDOWN
 }

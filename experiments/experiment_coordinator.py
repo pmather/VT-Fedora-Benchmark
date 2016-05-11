@@ -9,7 +9,6 @@ connection = None
 work_queue_name = None
 host_id = None
 temp_queue_name = None
-results_destination = None
 
 
 def handle_control_message(ch, method, props, body):
@@ -18,38 +17,31 @@ def handle_control_message(ch, method, props, body):
         return
     try:
         print "Received command: " + body + " , parameters: " + str(props.headers)
-        if body == "EXPERIMENT1":
+        if body == "FULL_INGESTION":
             if not props.headers and (
                                 "fedoraUrl" not in props.headers or "storageType" not in props.headers or "storageFolder" not in props.headers):
                 print "Missing necessary headers (fedoraUrl, storageType, storageFolder)"
                 return
-            import experiment1
+            import full_ingestion
             fedora_url = props.headers["fedoraUrl"]
             downloader = create_remote_downloader(props.headers["storageType"], props.headers["storageFolder"])
             client = RabbitMQClient(connection, work_queue_name)
             print "Starting experiment 1"
-            experiment1.run(fedora_url, downloader, client, results_destination)
+            full_ingestion.run(fedora_url, downloader, client)
             print "Finished running experiment 1. Acknowledging success"
             acknowledge(ch, props.reply_to, props.correlation_id)
-        elif body == "EXPERIMENT2":
-            import experiment2
+        elif body == "FULL_RETRIEVAL":
+            import full_retrieval
             client = RabbitMQClient(connection, work_queue_name)
             print "Starting experiment 2"
-            experiment2.run(client, results_destination)
+            full_retrieval.run(client)
             print "Finished running experiment 2. Acknowledging success"
-            acknowledge(ch, props.reply_to, props.correlation_id)
-        elif body == "EXPERIMENT3":
-            import experiment3
-            client = RabbitMQClient(connection, work_queue_name)
-            print "Starting experiment 3"
-            experiment3.run(client, results_destination)
-            print "Finished running experiment 3. Acknowledging success"
             acknowledge(ch, props.reply_to, props.correlation_id)
         elif body == "SHUTDOWN":
             if os.path.isfile("fedoraurls.txt"):
                 import clear_all
                 print "Performing cleanup"
-                clear_all.main("fedoraurls.txt", results_destination)
+                clear_all.main("fedoraurls.txt")
             print "Disconnecting from control topic"
             acknowledge(ch, props.reply_to, props.correlation_id)
             ch.queue_delete(queue=temp_queue_name)
@@ -78,16 +70,14 @@ def create_remote_downloader(storage_type, storage_folder):
 
 
 def main(rabbitmq_host, rabbitmq_username, rabbitmq_password, worker_id, control_topic, work_queue,
-         acknowledge_queue=None, correlation_id=None, results_dest=None):
+         acknowledge_queue=None, correlation_id=None):
     global connection
     global host_id
     global work_queue_name
     global temp_queue_name
-    global results_destination
 
     host_id = worker_id
     work_queue_name = work_queue
-    results_destination = results_dest
 
     credentials = pika.PlainCredentials(rabbitmq_username, rabbitmq_password)
     connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host, credentials=credentials))
@@ -110,5 +100,4 @@ def main(rabbitmq_host, rabbitmq_username, rabbitmq_password, worker_id, control
 if __name__ == "__main__":
     main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6],
          sys.argv[7] if len(sys.argv) > 7 and sys.argv[7] != "None" else None,
-         sys.argv[8] if len(sys.argv) > 8 and sys.argv[7] != "None" else None,
-         sys.argv[9] if len(sys.argv) > 9 else None)
+         sys.argv[8] if len(sys.argv) > 8 and sys.argv[7] != "None" else None)

@@ -6,7 +6,7 @@ import edu.vt.sil.administrator.AdministratorCommand;
  * Author: dedocibula
  * Created on: 29.2.2016.
  */
-public abstract class AbstractComponent implements Component {
+abstract class AbstractComponent implements Component {
     @Override
     public void handleCommand(AdministratorCommand command, String[] arguments) throws Exception {
         prepare(command, arguments);

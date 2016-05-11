@@ -16,17 +16,16 @@ import java.util.TreeMap;
  * Author: dedocibula
  * Created on: 2.3.2016.
  */
-public final class CommandHandler {
+final class CommandHandler {
     private Map<AdministratorCommand, Component> mappings;
 
-    public CommandHandler(RabbitMQProducer producer, String remoteUserName, String privateKeyName) throws Exception {
+    CommandHandler(RabbitMQProducer producer, String remoteUserName, String privateKeyName) throws Exception {
         mappings = new TreeMap<>();
 
         ExperimentOrchestrator orchestrator = new ExperimentOrchestrator(producer);
         mappings.put(AdministratorCommand.START_WORKERS, orchestrator);
-        mappings.put(AdministratorCommand.RUN_EXPERIMENT1, orchestrator);
-        mappings.put(AdministratorCommand.RUN_EXPERIMENT2, orchestrator);
-        mappings.put(AdministratorCommand.RUN_EXPERIMENT3, orchestrator);
+        mappings.put(AdministratorCommand.RUN_FULL_INGESTION, orchestrator);
+        mappings.put(AdministratorCommand.RUN_FULL_RETRIEVAL, orchestrator);
         mappings.put(AdministratorCommand.STOP_WORKERS, orchestrator);
 
         mappings.put(AdministratorCommand.FETCH_RESULTS, new RemoteFileFetcher(remoteUserName, privateKeyName));
@@ -35,12 +34,12 @@ public final class CommandHandler {
                 new OverlapProcessor()));
     }
 
-    public void printCommandLabels() {
+    void printCommandLabels() {
         for (AdministratorCommand command : mappings.keySet())
             System.out.println(String.format("\t%s %s", command, mappings.get(command).showLabel(command)));
     }
 
-    public void handleCommand(AdministratorCommand command, String... arguments) throws Exception {
+    void handleCommand(AdministratorCommand command, String... arguments) throws Exception {
         if (!mappings.containsKey(command))
             throw new IllegalArgumentException(String.format("Unrecognized command: %s", command));
 

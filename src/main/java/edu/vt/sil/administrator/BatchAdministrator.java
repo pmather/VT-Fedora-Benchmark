@@ -55,14 +55,11 @@ public final class BatchAdministrator {
                     AdministratorCommand command = extractCommand(step);
                     //noinspection ConstantConditions
                     switch (command) {
-                        case RUN_EXPERIMENT1:
-                            handler.handleCommand(AdministratorCommand.RUN_EXPERIMENT1, fedoraUrl, storageType, storageDirectory, dataset);
+                        case RUN_FULL_INGESTION:
+                            handler.handleCommand(AdministratorCommand.RUN_FULL_INGESTION, fedoraUrl, storageType, storageDirectory, dataset);
                             break;
-                        case RUN_EXPERIMENT2:
-                            handler.handleCommand(AdministratorCommand.RUN_EXPERIMENT2, fedoraUrl, dataset);
-                            break;
-                        case RUN_EXPERIMENT3:
-                            handler.handleCommand(AdministratorCommand.RUN_EXPERIMENT3, fedoraUrl, dataset);
+                        case RUN_FULL_RETRIEVAL:
+                            handler.handleCommand(AdministratorCommand.RUN_FULL_RETRIEVAL, fedoraUrl, dataset);
                             break;
                         default:
                             System.out.println(String.format("Skipping illegal command: %s", command));
@@ -73,9 +70,8 @@ public final class BatchAdministrator {
                 handler.handleCommand(AdministratorCommand.STOP_WORKERS);
             }
 
-            handler.handleCommand(AdministratorCommand.PROCESS_RESULTS, localResultsDirectory, RabbitMQCommand.EXPERIMENT1.name().toLowerCase());
-            handler.handleCommand(AdministratorCommand.PROCESS_RESULTS, localResultsDirectory, RabbitMQCommand.EXPERIMENT2.name().toLowerCase());
-            handler.handleCommand(AdministratorCommand.PROCESS_RESULTS, localResultsDirectory, RabbitMQCommand.EXPERIMENT3.name().toLowerCase());
+            handler.handleCommand(AdministratorCommand.PROCESS_RESULTS, localResultsDirectory, RabbitMQCommand.FULL_INGESTION.name().toLowerCase());
+            handler.handleCommand(AdministratorCommand.PROCESS_RESULTS, localResultsDirectory, RabbitMQCommand.FULL_RETRIEVAL.name().toLowerCase());
 
             System.out.println("======================================================");
             System.out.println("FINISHING BENCHMARK...");
