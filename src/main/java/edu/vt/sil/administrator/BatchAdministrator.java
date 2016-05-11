@@ -243,7 +243,7 @@ public final class BatchAdministrator {
             benchmarkMap.put("workerCounts", workerCounts.stream().map(count -> String.valueOf(count.intValue())).collect(Collectors.toList()));
             List<String> steps = new Gson().<List<String>>fromJson(benchmark.getAsJsonObject().getAsJsonArray("steps"), List.class);
             if (steps.stream().anyMatch(step -> extractCommand(step) == null))
-                throw new IllegalArgumentException("Steps must correspond to administrative commands (RUN_EXPERIMENT");
+                throw new IllegalArgumentException("Steps must correspond to administrative commands");
             benchmarkMap.put("steps", steps);
             result.add(benchmarkMap);
         }

@@ -2,39 +2,35 @@
 	"benchmarks": [
 		{
 			"worker_counts": [ 1 ],
-			"steps": [ "proxy_ingestion", "proxy_retrieval" ]
+			"steps": [ "run_proxy_ingestion", "run_proxy_retrieval" ]
 		},
 		{
 			"worker_counts": [ 1, 1 ],
-			"steps": [ "proxy_ingestion", "proxy_retrieval" ]
+			"steps": [ "run_proxy_ingestion", "run_proxy_retrieval" ]
 		},
 		{
 			"worker_counts": [ 1, 1, 1 ],
-			"steps": [ "proxy_ingestion", "proxy_retrieval" ]
+			"steps": [ "run_proxy_ingestion", "run_proxy_retrieval" ]
 		},
 		{
 			"worker_counts": [ 1, 1, 1, 1 ],
-			"steps": [ "proxy_ingestion", "proxy_retrieval" ]
+			"steps": [ "run_proxy_ingestion", "run_proxy_retrieval" ]
 		},
 		{
 			"worker_counts": [ 1, 1, 1, 1, 1 ],
-			"steps": [ "proxy_ingestion", "proxy_retrieval" ]
+			"steps": [ "run_proxy_ingestion", "run_proxy_retrieval" ]
 		},
 		{
 			"worker_counts": [ 1, 1, 1, 1, 1, 1 ],
-			"steps": [ "proxy_ingestion", "proxy_retrieval" ]
+			"steps": [ "run_proxy_ingestion", "run_proxy_retrieval" ]
 		},
 		{
 			"worker_counts": [ 1, 1, 1, 1, 1, 1, 1 ],
-			"steps": [ "proxy_ingestion", "proxy_retrieval" ]
+			"steps": [ "run_proxy_ingestion", "run_proxy_retrieval" ]
 		},
 		{
 			"worker_counts": [ 1, 1, 1, 1, 1, 1, 1, 1 ],
-			"steps": [ "proxy_ingestion", "proxy_retrieval" ]
-		},
-		{
-			"worker_counts": [ 1, 1, 1, 1, 1, 1, 1, 1, 1 ],
-			"steps": [ "proxy_ingestion", "proxy_retrieval" ]
+			"steps": [ "run_proxy_ingestion", "run_proxy_retrieval" ]
 		}
 	]
 }

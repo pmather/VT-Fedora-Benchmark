@@ -2,39 +2,35 @@
 	"benchmarks": [
 		{
 			"worker_counts": [ 1 ],
-			"steps": [ "full_ingestion", "full_retrieval" ]
+			"steps": [ "run_full_ingestion", "run_full_retrieval" ]
 		},
 		{
 			"worker_counts": [ 1, 1 ],
-			"steps": [ "full_ingestion", "full_retrieval" ]
+			"steps": [ "run_full_ingestion", "run_full_retrieval" ]
 		},
 		{
 			"worker_counts": [ 1, 1, 1 ],
-			"steps": [ "full_ingestion", "full_retrieval" ]
+			"steps": [ "run_full_ingestion", "run_full_retrieval" ]
 		},
 		{
 			"worker_counts": [ 1, 1, 1, 1 ],
-			"steps": [ "full_ingestion", "full_retrieval" ]
+			"steps": [ "run_full_ingestion", "run_full_retrieval" ]
 		},
 		{
 			"worker_counts": [ 1, 1, 1, 1, 1 ],
-			"steps": [ "full_ingestion", "full_retrieval" ]
+			"steps": [ "run_full_ingestion", "run_full_retrieval" ]
 		},
 		{
 			"worker_counts": [ 1, 1, 1, 1, 1, 1 ],
-			"steps": [ "full_ingestion", "full_retrieval" ]
+			"steps": [ "run_full_ingestion", "run_full_retrieval" ]
 		},
 		{
 			"worker_counts": [ 1, 1, 1, 1, 1, 1, 1 ],
-			"steps": [ "full_ingestion", "full_retrieval" ]
+			"steps": [ "run_full_ingestion", "run_full_retrieval" ]
 		},
 		{
 			"worker_counts": [ 1, 1, 1, 1, 1, 1, 1, 1 ],
-			"steps": [ "full_ingestion", "full_retrieval" ]
-		},
-		{
-			"worker_counts": [ 1, 1, 1, 1, 1, 1, 1, 1, 1 ],
-			"steps": [ "full_ingestion", "full_retrieval" ]
+			"steps": [ "run_full_ingestion", "run_full_retrieval" ]
 		}
 	]
 }
