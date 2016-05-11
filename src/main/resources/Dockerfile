@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y \
 RUN wget -q https://bootstrap.pypa.io/get-pip.py -O get-pip.py && python get-pip.py && pip install boto3 pika xmltodict requests && rm get-pip.py
 
 ENV BENCHMARK_HOME /vt-fedora-benchmark/experiments
-ENV BENCHMARK_URL https://DedoCibula@bitbucket.org/DedoCibula/vt-fedora-benchmark.git
+ENV BENCHMARK_URL https://github.com/VTUL/VT-Fedora-Benchmark.git
 ENV FITS_URL http://projects.iq.harvard.edu/files/fits/files/fits-0.9.0.zip?m=1449588471
 
 RUN git clone "$BENCHMARK_URL" vt-fedora-benchmark
