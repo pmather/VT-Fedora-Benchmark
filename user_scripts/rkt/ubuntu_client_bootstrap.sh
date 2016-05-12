@@ -9,7 +9,7 @@ sudo apt-get upgrade && sudo apt-get update && sudo apt-get install -y \
     ntp \
     vim \
     wget
-git clone https://DedoCibula@bitbucket.org/DedoCibula/vt-fedora-benchmark.git
+git clone https://github.com/VTUL/VT-Fedora-Benchmark.git vt-fedora-benchmark
 ln -s vt-fedora-benchmark/orchestrators/rkt_orchestrator.py collector.py
 
 wget https://github.com/coreos/rkt/releases/download/v1.3.0/rkt-v1.3.0.tar.gz
