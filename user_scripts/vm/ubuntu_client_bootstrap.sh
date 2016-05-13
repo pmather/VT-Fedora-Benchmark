@@ -2,8 +2,14 @@
 RABBITMQ_URL=
 RABBITMQ_USERNAME="admin"
 RABBITMQ_PASSWORD="admin"
-
-sudo apt-get upgrade && sudo apt-get update && sudo apt-get install -y git
+if [ $# -ge 1 ]; then
+  RABBITMQ_URL="$1"
+fi
+if [ $# -ge 2 ]; then
+  shift;
+  echo -n "Ignoring extra arguments: $@"
+fi
+sudo apt-get update && sudo apt-get install -y git
 git clone https://github.com/VTUL/VT-Fedora-Benchmark.git vt-fedora-benchmark
 vt-fedora-benchmark/utils/client_setup.sh
 ln -s vt-fedora-benchmark/orchestrators/process_orchestrator.py collector.py
