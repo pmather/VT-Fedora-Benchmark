@@ -1,4 +1,13 @@
 #!/bin/bash
+FEDORA_DATA="/opt/fedora/fedora-data"
+if [ $# -ge 1 ]; then
+  FEDORA_DATA="$1"
+fi
+if [ $# -ge 2 ]; then
+  shift;
+  echo -n "Ignoring extra arguments: $@"
+fi
+
 sudo add-apt-repository ppa:openjdk-r/ppa -y
 
 sudo apt-get update && sudo apt-get install -y \
@@ -23,11 +32,10 @@ sudo ln -s $(readlink -f /usr/bin/java | sed "s:bin/java::" | sed "s:/jre/::") /
 
 sudo apt-get install tomcat7 tomcat7-admin -y
 
-cd
-mkdir fedora-data
-sudo chown tomcat7:tomcat7 fedora-data
-sudo sed -i '0,/JAVA_OPTS=".*"/s//JAVA_OPTS=\"-Djava.awt.headless=true -Xmx512m -XX:MaxPermSize=512m -XX:+UseConcMarkSweepGC -Dfcrepo.home=${HOME}\/fedora-data\"/' /etc/default/tomcat7
-sudo sed -i "s:\${HOME}:${HOME}:" /etc/default/tomcat7
+mkdir -p "$FEDORA_DATA"
+sudo chown tomcat7:tomcat7 "$FEDORA_DATA"
+sudo sed -i '0,/JAVA_OPTS=".*"/s//JAVA_OPTS=\"-Djava.awt.headless=true -Xmx512m -XX:MaxPermSize=512m -XX:+UseConcMarkSweepGC -Dfcrepo.home=${FEDORA_DATA}\"/' /etc/default/tomcat7
+sudo sed -i "s:\${FEDORA_DATA}:${FEDORA_DATA}:" /etc/default/tomcat7
 
 cd
 curl -s https://api.github.com/repos/fcrepo4/fcrepo4/releases \
